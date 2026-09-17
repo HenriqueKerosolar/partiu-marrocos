@@ -896,4 +896,100 @@ export const HELP_CONTENT: Record<string, Partial<Record<HelpLocale, HelpContent
       acoes: "Publier ou dépublier un témoignage (seulement une fois le consentement du client déjà obtenu).",
     },
   },
+  "public.home": {
+    "pt-BR": {
+      titulo: "Site público",
+      objetivo: "Página inicial pública da agência: roteiros, inspirações, saídas disponíveis e o formulário de orçamento — quem visita não tem conta nem sessão.",
+      quemUsa: "Visitante anônimo do site.",
+      acoes: "Pedir um orçamento pelo formulário 'Por onde começamos?', falar por WhatsApp/e-mail, ou navegar pelas outras páginas do site (Universo amazigh, Sabores do Marrocos).",
+    },
+    en: {
+      titulo: "Public site",
+      objetivo: "The agency's public homepage: itineraries, inspirations, available departures and the quote request form — visitors have no account or session.",
+      quemUsa: "Anonymous site visitor.",
+      acoes: "Request a quote via the 'Where shall we start?' form, reach out by WhatsApp/email, or browse the site's other pages (Amazigh universe, Flavours of Morocco).",
+    },
+    "pt-PT": {
+      titulo: "Site público",
+      objetivo: "Página inicial pública da agência: roteiros, inspirações, saídas disponíveis e o formulário de orçamento — quem visita não tem conta nem sessão.",
+      quemUsa: "Visitante anónimo do site.",
+      acoes: "Pedir um orçamento pelo formulário 'Por onde começamos?', contactar por WhatsApp/e-mail, ou navegar pelas outras páginas do site.",
+    },
+    es: {
+      titulo: "Sitio público",
+      objetivo: "Página de inicio pública de la agencia: itinerarios, inspiraciones, salidas disponibles y el formulario de presupuesto — quien visita no tiene cuenta ni sesión.",
+      quemUsa: "Visitante anónimo del sitio.",
+      acoes: "Pedir un presupuesto con el formulario '¿Por dónde empezamos?', contactar por WhatsApp/correo, o navegar por las demás páginas del sitio.",
+    },
+    fr: {
+      titulo: "Site public",
+      objetivo: "Page d'accueil publique de l'agence : circuits, inspirations, départs disponibles et le formulaire de devis — les visiteurs n'ont ni compte ni session.",
+      quemUsa: "Visiteur anonyme du site.",
+      acoes: "Demander un devis via le formulaire « Par où commencer ? », contacter par WhatsApp/e-mail, ou parcourir les autres pages du site.",
+    },
+  },
+  "public.amazigh": {
+    "pt-BR": {
+      titulo: "Universo amazigh",
+      objetivo: "Página editorial sobre a cultura e a história amazigh (povos, língua, escrita Tifinagh, celebrações) — conteúdo de leitura, não um formulário.",
+      quemUsa: "Visitante anônimo do site.",
+      acoes: "Ler as histórias e seguir os links de fontes acadêmicas/institucionais citadas, ou pedir um orçamento no formulário ao final da página.",
+    },
+    en: {
+      titulo: "Amazigh universe",
+      objetivo: "Editorial page about Amazigh culture and history (peoples, language, Tifinagh script, celebrations) — reading content, not a form.",
+      quemUsa: "Anonymous site visitor.",
+      acoes: "Read the stories and follow the cited academic/institutional source links, or request a quote in the form at the bottom of the page.",
+    },
+    "pt-PT": {
+      titulo: "Universo amazigh",
+      objetivo: "Página editorial sobre a cultura e a história amazigh (povos, língua, escrita Tifinagh, celebrações) — conteúdo de leitura, não um formulário.",
+      quemUsa: "Visitante anónimo do site.",
+      acoes: "Ler as histórias e seguir as fontes académicas/institucionais citadas, ou pedir um orçamento no formulário no final da página.",
+    },
+    es: {
+      titulo: "Universo amazigh",
+      objetivo: "Página editorial sobre la cultura y la historia amazigh (pueblos, lengua, escritura tifinagh, celebraciones) — contenido de lectura, no un formulario.",
+      quemUsa: "Visitante anónimo del sitio.",
+      acoes: "Leer las historias y seguir los enlaces de fuentes académicas/institucionales citadas, o pedir un presupuesto en el formulario al final de la página.",
+    },
+    fr: {
+      titulo: "Univers amazigh",
+      objetivo: "Page éditoriale sur la culture et l'histoire amazighes (peuples, langue, écriture tifinagh, célébrations) — contenu de lecture, pas un formulaire.",
+      quemUsa: "Visiteur anonyme du site.",
+      acoes: "Lire les récits et suivre les liens vers les sources académiques/institutionnelles citées, ou demander un devis dans le formulaire en bas de page.",
+    },
+  },
+  "public.sabores": {
+    "pt-BR": {
+      titulo: "Sabores do Marrocos",
+      objetivo: "Página editorial sobre a gastronomia marroquina: pratos, receitas e curiosidades — conteúdo de leitura, não um formulário.",
+      quemUsa: "Visitante anônimo do site.",
+      acoes: "Ler os pratos e receitas, abrir 'Fontes e leituras' de cada seção, ou pedir um orçamento no formulário ao final da página.",
+    },
+    en: {
+      titulo: "Flavours of Morocco",
+      objetivo: "Editorial page about Moroccan gastronomy: dishes, recipes and trivia — reading content, not a form.",
+      quemUsa: "Anonymous site visitor.",
+      acoes: "Read the dishes and recipes, open 'Sources and further reading' on each section, or request a quote in the form at the bottom of the page.",
+    },
+    "pt-PT": {
+      titulo: "Sabores de Marrocos",
+      objetivo: "Página editorial sobre a gastronomia marroquina: pratos, receitas e curiosidades — conteúdo de leitura, não um formulário.",
+      quemUsa: "Visitante anónimo do site.",
+      acoes: "Ler os pratos e receitas, abrir 'Fontes e leituras' de cada secção, ou pedir um orçamento no formulário no final da página.",
+    },
+    es: {
+      titulo: "Sabores de Marruecos",
+      objetivo: "Página editorial sobre la gastronomía marroquí: platos, recetas y curiosidades — contenido de lectura, no un formulario.",
+      quemUsa: "Visitante anónimo del sitio.",
+      acoes: "Leer los platos y recetas, abrir 'Fuentes y lecturas' de cada sección, o pedir un presupuesto en el formulario al final de la página.",
+    },
+    fr: {
+      titulo: "Saveurs du Maroc",
+      objetivo: "Page éditoriale sur la gastronomie marocaine : plats, recettes et anecdotes — contenu de lecture, pas un formulaire.",
+      quemUsa: "Visiteur anonyme du site.",
+      acoes: "Lire les plats et recettes, ouvrir « Sources et lectures » de chaque section, ou demander un devis dans le formulaire en bas de page.",
+    },
+  },
 };

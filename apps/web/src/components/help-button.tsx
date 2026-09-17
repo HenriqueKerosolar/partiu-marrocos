@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { buscarAjudaAction } from "@/app/actions/help";
+import { buscarAjudaAction, buscarAjudaPublicaAction } from "@/app/actions/help";
 import type { HelpContent } from "@partiumarrocos/db";
 
 /**
@@ -10,15 +10,19 @@ import type { HelpContent } from "@partiumarrocos/db";
  * reorganiza a página, nunca aumenta permanentemente cards/headers).
  * Fecha ao clicar fora ou no X. Conteúdo vem de `resolverAjuda` (packages/
  * db/src/help) — nunca mostra a `helpKey` crua se não houver conteúdo.
+ *
+ * `publico`: usado nas páginas do site público (visitante sem sessão) —
+ * chama `buscarAjudaPublicaAction` em vez de `buscarAjudaAction`
+ * (`requireAuthContext` redirecionaria pro /login e quebraria o botão ali).
  */
-export function HelpButton({ helpKey }: { helpKey: string }) {
+export function HelpButton({ helpKey, publico = false }: { helpKey: string; publico?: boolean }) {
   const [aberto, setAberto] = useState(false);
   const [conteudo, setConteudo] = useState<HelpContent | null>(null);
   const [pending, startTransition] = useTransition();
 
   function abrir() {
     setAberto(true);
-    if (!conteudo) startTransition(async () => setConteudo(await buscarAjudaAction(helpKey)));
+    if (!conteudo) startTransition(async () => setConteudo(await (publico ? buscarAjudaPublicaAction(helpKey) : buscarAjudaAction(helpKey))));
   }
 
   return (

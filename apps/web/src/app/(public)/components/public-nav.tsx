@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HelpButton } from "@/components/help-button";
 
 const NAV_LINKS: [string, string, string][] = [
   ["/", "Descobrir", "home"],
@@ -19,17 +20,28 @@ const NAV_LINKS: [string, string, string][] = [
 // atualiza a URL) — reportado pelo usuário ("os botões não fazem nada").
 // `onHome` diz se a página atual É a home (onde as seções existem); fora
 // dela, a âncora precisa apontar pra "/#site-x" (navegação real de página).
-export function PublicNav({ active = "home", onHome = true }: { active?: string; onHome?: boolean }) {
+export function PublicNav({
+  active = "home",
+  onHome = true,
+  helpKey = "public.home",
+}: {
+  active?: string;
+  onHome?: boolean;
+  helpKey?: "public.home" | "public.amazigh" | "public.sabores" | "auth.login";
+}) {
   return (
     <>
       <header className="brand-header">
-        <Link href="/" className="brand">
-          <img src="/img/logo.png" alt="Partiu Marrocos" />
-          <span>
-            Sua viagem,
-            <em>por inteiro.</em>
-          </span>
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link href="/" className="brand">
+            <img src="/img/logo.png" alt="Partiu Marrocos" />
+            <span>
+              Sua viagem,
+              <em>por inteiro.</em>
+            </span>
+          </Link>
+          <HelpButton helpKey={helpKey} publico />
+        </div>
         <div className="header-links">
           <a href={onHome ? "#site-inspirations" : "/#site-inspirations"}>Pacotes</a>
           <Link href="/universo-amazigh">Universo amazigh</Link>

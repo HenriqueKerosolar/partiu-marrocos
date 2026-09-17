@@ -51,7 +51,7 @@ export default function LoginPage() {
   return (
     <>
       <style>{`body{background:#080e19}`}</style>
-      <PublicNav onHome={false} />
+      <PublicNav onHome={false} helpKey="auth.login" />
       <div className="public-editorial" data-public-landing>
         <section className="access-layout">
           <div className="access-intro">

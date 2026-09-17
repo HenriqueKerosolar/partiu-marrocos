@@ -46,6 +46,10 @@ export const HELP_ROUTES: HelpRouteEntry[] = [
   // PM-CONV-10 — rotas novas
   { helpKey: "notificacoes.overview", rota: "/notificacoes", papel: "Todos os papéis", origem: "PM-CONV-10" },
   { helpKey: "avaliacoes.overview", rota: "/avaliacoes", papel: "Vendas, Atendimento, Administrador", origem: "PM-CONV-10" },
+  // PM-TRANSLATE-01 — site público (rotas anônimas, sem sessão; ver buscarAjudaPublicaAction)
+  { helpKey: "public.home", rota: "/", papel: "Visitante anônimo do site público", origem: "PM-CONV-10" },
+  { helpKey: "public.amazigh", rota: "/universo-amazigh", papel: "Visitante anônimo do site público", origem: "PM-CONV-10" },
+  { helpKey: "public.sabores", rota: "/sabores-do-marrocos", papel: "Visitante anônimo do site público", origem: "PM-CONV-10" },
 ];
 
 export const HELP_KEYS = HELP_ROUTES.map((r) => r.helpKey);

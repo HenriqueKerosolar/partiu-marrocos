@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Sabores do Marrocos · Partiu Marroc
 export default function SaboresDoMarrocosPage() {
   return (
     <>
-      <PublicNav active="food" onHome={false} />
+      <PublicNav active="food" onHome={false} helpKey="public.sabores" />
       <div className="public-editorial editorial-inner" data-public-landing>
         <h1 className="editorial-page-title">Sabores do Marrocos</h1>
         <FoodScene full />
