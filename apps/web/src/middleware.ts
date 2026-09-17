@@ -31,7 +31,16 @@ const PUBLIC_PATHS = ["/login", "/minha-viagem"];
 // este prefixo continua responsável pela própria validação (rate limit,
 // tenant, input) — "pública" aqui é só "sem cookie de sessão", nunca "sem
 // controle nenhum".
-const PUBLIC_API_PATH_PREFIXES = ["/api/public/"];
+//
+// PM-PRE-GOLIVE-MASTER-01 — achado real em produção: `/api/health` (sem
+// sessão por design, ver route.ts) e `/api/webhooks/` (validação própria via
+// HMAC — a Meta nunca envia cookie de sessão) devolviam 401 aqui ANTES de
+// chegar nas próprias rotas, que já foram escritas pra rodar sem sessão.
+// Mascarado em todo teste anterior porque eu sempre testava logado (cookie
+// de sessão válido, então o middleware deixava passar por acidente) — só
+// apareceu numa chamada de verdade sem sessão (o cenário real de um
+// monitor externo ou da própria Meta).
+const PUBLIC_API_PATH_PREFIXES = ["/api/public/", "/api/health", "/api/webhooks/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

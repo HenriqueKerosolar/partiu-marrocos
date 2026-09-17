@@ -36,4 +36,24 @@ describe("middleware — rotas públicas (sem sessão)", () => {
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toContain("/login");
   });
+
+  /**
+   * PM-PRE-GOLIVE-MASTER-01 — achado real em produção, mesma classe do
+   * achado de /api/public/* acima: /api/health e /api/webhooks/* já eram
+   * escritos como públicos (sem `requireAuthContext`/verificação própria de
+   * assinatura), mas o middleware devolvia 401 antes de chegar neles. Só
+   * apareceu numa chamada real sem sessão (monitor externo, ou a própria
+   * Meta batendo no webhook) — todo teste anterior tinha sessão válida.
+   */
+  it("GET /api/health passa sem sessão (endpoint de monitoramento externo)", async () => {
+    const req = new NextRequest("http://localhost/api/health", { method: "GET" });
+    const res = await middleware(req);
+    expect(res.status).not.toBe(401);
+  });
+
+  it("GET /api/webhooks/whatsapp passa sem sessão (a Meta nunca envia cookie de sessão)", async () => {
+    const req = new NextRequest("http://localhost/api/webhooks/whatsapp", { method: "GET" });
+    const res = await middleware(req);
+    expect(res.status).not.toBe(401);
+  });
 });
