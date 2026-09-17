@@ -1,0 +1,556 @@
+<title>Inventário PM-CONV-02</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#EEF1F4;
+    --text:#1B2430; --text-muted:#5B6472; --border:#DDE1E7;
+    --accent:#0F6B5C; --accent-soft:#E6F2EF; --accent-ink:#0B4E43;
+    --ok:#0F6B5C; --warn:#8A5A0B; --crit:#9B2C2C;
+    --code-bg:#EEF1F4;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161C; --surface:#1A1F27; --surface-2:#20262F;
+      --text:#E7EAEE; --text-muted:#9AA4B2; --border:#2A313B;
+      --accent:#34C9A3; --accent-soft:#1B2E29; --accent-ink:#8FE9D2;
+      --ok:#34C9A3; --warn:#E0AC4B; --crit:#E5807E;
+      --code-bg:#20262F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161C; --surface:#1A1F27; --surface-2:#20262F;
+    --text:#E7EAEE; --text-muted:#9AA4B2; --border:#2A313B;
+    --accent:#34C9A3; --accent-soft:#1B2E29; --accent-ink:#8FE9D2;
+    --ok:#34C9A3; --warn:#E0AC4B; --crit:#E5807E;
+    --code-bg:#20262F;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    line-height:1.6;
+  }
+  h1,h2,h3{
+    font-family:"Newsreader", Georgia, serif;
+    color:var(--text); text-wrap:balance; font-weight:600;
+    line-height:1.25;
+  }
+  code, .mono, td.mono, th.mono{
+    font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+  code{
+    background:var(--code-bg); border:1px solid var(--border);
+    border-radius:4px; padding:0.05em 0.35em; font-size:0.88em;
+  }
+
+  .topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:10;
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:14px 20px; padding-top:calc(14px + env(safe-area-inset-top,0px));
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .topbar .ident{display:flex; flex-direction:column; gap:2px; margin-right:auto;}
+  .topbar .kicker{
+    font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--accent-ink);
+  }
+  .topbar .name{font-family:"Newsreader",serif; font-size:19px; font-weight:600;}
+  .copybtn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--accent); color:#fff; border:none; border-radius:8px;
+    padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer;
+    font-family:inherit; white-space:nowrap;
+    transition:transform 0.12s ease, opacity 0.12s ease;
+  }
+  .copybtn:hover{opacity:0.92;}
+  .copybtn:active{transform:scale(0.97);}
+  .copybtn:focus-visible{outline:2px solid var(--accent-ink); outline-offset:2px;}
+  .copybtn svg{width:16px; height:16px; flex:none;}
+  .copyhint{font-size:12px; color:var(--text-muted); max-width:220px;}
+
+  main{
+    max-width:800px; margin:0 auto; padding:32px 20px 96px;
+  }
+  .stamp{
+    display:flex; gap:10px; flex-wrap:wrap; margin:18px 0 28px;
+  }
+  .badge{
+    font-family:"IBM Plex Mono", monospace; font-size:11.5px; letter-spacing:0.03em;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-muted);
+    border-radius:999px; padding:5px 12px;
+  }
+  .badge.accent{background:var(--accent-soft); color:var(--accent-ink); border-color:transparent;}
+
+  .lede{
+    font-size:15.5px; color:var(--text-muted); border-left:3px solid var(--accent);
+    padding:4px 0 4px 16px; margin:0 0 36px;
+  }
+  .lede code{font-size:0.9em;}
+
+  section{margin:44px 0;}
+  section > h2{
+    font-size:23px; padding-bottom:10px; border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  section h3{font-size:17px; margin:22px 0 10px;}
+  p{margin:0 0 14px; max-width:66ch;}
+  ol, ul{margin:0 0 14px; padding-left:22px; max-width:66ch;}
+  li{margin-bottom:6px;}
+  strong{color:var(--text);}
+
+  .tablewrap{overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:14px 0 22px;}
+  table{border-collapse:collapse; width:100%; font-size:13.5px;}
+  thead th{
+    background:var(--surface-2); text-align:left; font-weight:600;
+    padding:9px 12px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+
+  .note{
+    background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:0 8px 8px 0; padding:12px 16px; font-size:13.5px; color:var(--text-muted); margin:16px 0;
+  }
+  .verdict{
+    background:var(--accent-soft); border:1px solid var(--accent); border-radius:10px;
+    padding:20px 22px; margin:18px 0;
+  }
+  .verdict h3{margin-top:0; color:var(--accent-ink);}
+  .stop{
+    background:var(--surface-2); border:1px dashed var(--border); border-radius:10px;
+    padding:20px 22px; text-align:center; margin-top:44px;
+  }
+  .stop .big{font-family:"IBM Plex Mono", monospace; font-size:13px; letter-spacing:0.12em; color:var(--text-muted);}
+
+  #raw{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;}
+
+  @media (max-width:520px){
+    .topbar{padding:12px 16px;}
+    .topbar .name{font-size:16px;}
+    main{padding:24px 16px 80px;}
+    section > h2{font-size:20px;}
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<div class="topbar">
+  <div class="ident">
+    <span class="kicker">Partiu Marrocos · Auditoria</span>
+    <span class="name">PM-CONV-02 — Inventário da Convergência</span>
+  </div>
+  <button class="copybtn" id="copyBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <span id="copyLabel">Copiar documento inteiro</span>
+  </button>
+</div>
+
+<main>
+  <div class="stamp">
+    <span class="badge accent">Modo: AUDITORIA / SEM IMPLEMENTAÇÃO</span>
+    <span class="badge">Nada alterado no código, schema ou layout</span>
+    <span class="badge">16/09/2026</span>
+  </div>
+
+  <p class="lede">
+    Referência obrigatória usada: <code>PM_CONVERGENCIA_MESTRE_v1.0_CODE.docx</code> (lido integralmente).
+    Decisão arquitetural já tomada nesse documento — <strong>não rediscutida aqui</strong>: a fundação oficial
+    (Next.js/TypeScript + PostgreSQL/Prisma + Tenant Core/RLS) permanece; PHP/Firebase/Firestore da entrega
+    0.4.11 nunca substituem essa fundação; nenhuma alteração de layout é autorizada.
+  </p>
+
+  <section id="metodologia">
+    <h2>0. Metodologia desta auditoria</h2>
+    <p>
+      Todo o código não-vendor da entrega 0.4.11 foi <strong>lido integralmente</strong> nesta sessão
+      (16 arquivos PHP do backend, 794 linhas; o roteador, service worker e principais módulos JS do frontend;
+      <code>firestore.rules</code>; <code>firestore.indexes.json</code>) — não apenas indexado por nome.
+      A documentação do Valter (README, manual operacional de 2976 linhas, reconstrução completa de 4189 linhas)
+      foi consultada para o "declarado", mas — conforme a regra explícita do comando ("documentação não é prova
+      de implementação") — toda afirmação relevante está ancorada em código real, com caminho de arquivo. Onde a
+      documentação do Valter diverge do código, o código prevalece e a divergência é registrada.
+    </p>
+  </section>
+
+  <section id="a">
+    <h2>A. Inventário do repositório oficial atual</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Item</th><th>Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Caminho absoluto</td><td class="mono">D:\Projetos\Agencia de turismo internacional</td></tr>
+        <tr><td>Stack</td><td>Next.js 14 (App Router) + TypeScript, PostgreSQL + Prisma, pnpm workspace</td></tr>
+        <tr><td>Estrutura</td><td class="mono">apps/web (Next.js), packages/db (Prisma + domínio)</td></tr>
+        <tr><td>Modelos Prisma</td><td>42</td></tr>
+        <tr><td>Migrations aplicadas</td><td>39, 100% aditivas, nenhuma destrutiva</td></tr>
+        <tr><td>Arquivos <code>.ts</code> em packages/db/src</td><td>48</td></tr>
+        <tr><td>Arquivos <code>.ts</code>/<code>.tsx</code> em apps/web/src</td><td>93</td></tr>
+        <tr><td>Testes automatizados</td><td>468 (364 packages/db + 104 apps/web), todos passando</td></tr>
+        <tr><td>Rotas finais (apps/web)</td><td>21</td></tr>
+        <tr><td>Git</td><td><strong>não inicializado</strong> neste repositório — confirmado, não presumido</td></tr>
+        <tr><td>RLS</td><td>Fail-closed em toda tabela tenant_id, via withTenant/withSystem + FORCE ROW LEVEL SECURITY</td></tr>
+        <tr><td>Auth</td><td>Sessão por cookie httpOnly, e-mail/senha (bcrypt), troca de senha obrigatória no 1º acesso</td></tr>
+        <tr><td>RBAC</td><td>Role/Permission/RolePermission configurável por tenant</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Módulos de domínio já existentes: <code>attribution.ts</code>, <code>audit.ts</code>, <code>booking.ts</code>,
+      <code>commercial-policy.ts</code>, <code>commission.ts</code>, <code>cost-control.ts</code>, <code>cross-tenant.ts</code>,
+      <code>gates.ts</code>, <code>payment.ts</code>, <code>permissions.ts</code>, <code>proposals.ts</code>,
+      <code>receivables.ts</code>, <code>secret-provider.ts</code>, <code>tenant-db.ts</code>, <code>travel-documents.ts</code>,
+      <code>trip.ts</code>, mais <code>crm/</code>, <code>finance/</code>, <code>i18n/</code>, <code>jobs/</code>, <code>tools/</code>.
+    </p>
+    <div class="note">
+      Confirmado por grep no schema: não existe hoje nenhum model <code>Partner</code>, <code>Guide</code>,
+      <code>Driver</code>, <code>Vehicle</code>, <code>SupportTicket</code>, <code>Review</code> ou
+      <code>QrToken</code>/<code>ArrivalSession</code> no sistema oficial — todos esses domínios, presentes na
+      0.4.11, são candidatos de importação avaliados abaixo.
+    </div>
+  </section>
+
+  <section id="b">
+    <h2>B. Inventário físico da entrega 0.4.11 (Valter)</h2>
+    <p>
+      <strong>Caminho de origem</strong>: <code>partiumarrocos.com.br-php74-0.4.11.zip</code> (9.814.413 bytes).
+      Extraído para auditoria em scratchpad de sessão — <strong>não copiado para dentro do repositório oficial</strong>,
+      conforme regra bloqueante nº 3.
+    </p>
+    <p>
+      Documentação relacionada: pacote de 45.903.131 bytes com manual navegável, manual operacional (PDF/MD),
+      reconstrução completa e um snapshot de 739 arquivos-fonte para reprodução.
+    </p>
+
+    <h3>Totais</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Categoria</th><th>Qtd.</th></tr></thead>
+      <tbody>
+        <tr><td>Arquivos totais no ZIP de código</td><td>267</td></tr>
+        <tr><td>Arquivos PHP (inclui vendor/Composer)</td><td>176</td></tr>
+        <tr><td>Arquivos PHP de domínio próprio</td><td>16</td></tr>
+        <tr><td>Arquivos JS de frontend</td><td>22</td></tr>
+        <tr><td>Imagens (.jpg/.png/.svg)</td><td>32</td></tr>
+        <tr><td>Documentos Markdown internos</td><td>4</td></tr>
+        <tr><td>Firestore rules/indexes</td><td>2</td></tr>
+        <tr><td>Manifesto PWA</td><td>1</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Separação por categoria</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Categoria</th><th>Conteúdo</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Documentação</td><td>README, COMPATIBILIDADE-74, INSTALACAO, SITE-RENOVADO, VALIDACAO, RELEASE.json + pacote de 45 MB</td><td>presente, extensa</td></tr>
+        <tr><td>Backend</td><td>16 arquivos <code>_private/src/*.php</code></td><td>real, lido integralmente</td></tr>
+        <tr><td>Frontend</td><td><code>app/*.js</code>, <code>app/*.css</code>, <code>app/index.html</code></td><td>real</td></tr>
+        <tr><td>Firebase/Firestore</td><td><code>firestore.rules</code> (nega tudo ao cliente), <code>firestore.indexes.json</code> (vazio)</td><td>real, limitação de escala</td></tr>
+        <tr><td>Auth</td><td><code>Firebase.php</code> — login exclusivamente via Google OAuth</td><td>real</td></tr>
+        <tr><td>Regras de negócio</td><td><code>Bookings.php</code>, <code>Operations.php</code>, <code>Services.php</code>, <code>Experience.php</code></td><td>real, densa</td></tr>
+        <tr><td>Integrações</td><td>Stripe, e-mail (SMTP/Resend/Webhook), Firestore REST</td><td>real, ver Tabela G</td></tr>
+        <tr><td>Testes</td><td><strong>nenhum arquivo de teste automatizado encontrado</strong></td><td><strong>ausente</strong></td></tr>
+        <tr><td>PWA/Offline</td><td><code>sw.js</code>, <code>offline.js</code>, <code>offline-mode.js</code>, <code>manifest.webmanifest</code></td><td>real, simples</td></tr>
+        <tr><td>Assets</td><td>28 imagens de destino, logo, ícone, geo.json, roads.json</td><td>conteúdo, não camada de dados</td></tr>
+        <tr><td>Scripts/build/deploy</td><td><code>console.php</code> (check-config, bootstrap, import-catalog, worker, verify-email, verify-firebase)</td><td>real</td></tr>
+        <tr><td>Dados/seeds/fixtures</td><td><code>starter-catalog.json</code>, <code>manual-data.json</code></td><td>presente</td></tr>
+        <tr><td>Configuração</td><td><code>config.example.php</code>, <code>.htaccess</code></td><td>sem segredo comitado</td></tr>
+        <tr><td>Outros</td><td><code>composer.json/.lock</code> (phpmailer, bacon-qr-code, dasprid/enum)</td><td>vendor de terceiros</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="c">
+    <h2>C. Mapa DOCUMENTO VALTER → CÓDIGO REAL</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Documento</th><th>Declaração</th><th>Evidência no código</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>LEIA-ME.md</td><td>"Login Google e acesso real ao Firebase foram verificados"</td><td><code>FirebaseAuth::verify()</code> implementa verificação RS256 completa contra certificados reais do Google</td><td><strong>COMPROVADA</strong></td></tr>
+        <tr><td>LEIA-ME.md</td><td>"Stripe permanece desativado para a segunda fase"</td><td><code>Payments.php::configured()</code> exige <code>PM_ONLINE_PAYMENTS_ENABLED==='true'</code>; default é <code>'false'</code></td><td><strong>COMPROVADA</strong> (código real, desligado por config)</td></tr>
+        <tr><td>LEIA-ME.md</td><td>"envio real de e-mails... continua com pendências"</td><td><code>Email.php</code> real (SMTP/Resend/Webhook), mas sem credencial real no pacote</td><td><strong>PARCIALMENTE COMPROVADA</strong></td></tr>
+        <tr><td>RELEASE.json</td><td>versão 0.4.11-php74</td><td><code>Runtime::VERSION</code> confere</td><td><strong>COMPROVADA</strong></td></tr>
+        <tr><td>Manual/Reconstrução (7.165 linhas)</td><td>79 capítulos cobrindo todos os papéis</td><td>não lido linha a linha (volume incompatível); papéis confirmados independentemente no código</td><td>CONSISTENTE, não lido exaustivamente</td></tr>
+        <tr><td>firestore.rules (comentário)</td><td>"Browser uses... the authenticated Node API"</td><td>o backend real é PHP, não Node</td><td>CONTRADITA EM DETALHE, sem efeito de segurança</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Os 7.165 linhas de <code>MANUAL-OPERACIONAL.md</code> + <code>RECONSTRUCAO-COMPLETA.md</code> não foram lidas
+      linha a linha nesta rodada — volume incompatível com o escopo de uma auditoria de código desta profundidade
+      em uma rodada. Ver limitação declarada no Veredito (§44).
+    </div>
+  </section>
+
+  <section id="d">
+    <h2>D. Mapa CÓDIGO VALTER → FUNCIONALIDADE (inclui não documentado)</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Arquivo</th><th>Recurso</th><th>Valor</th><th>Destino</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Services.php::createGate/approveGate/executeGate</td><td>Gate próprio com fingerprint do sujeito, verificado na execução</td><td>Alto</td><td>Reaproveitar lógica (Grupo 2)</td></tr>
+        <tr><td class="mono">Platform.php::command()</td><td>Idempotência por requestKey + hash do payload</td><td>Alto</td><td>Reaproveitar lógica (Grupo 2)</td></tr>
+        <tr><td class="mono">Operations.php::saveGroup</td><td>Checagem de conflito de alocação (veículo/guia/motorista × datas)</td><td>Alto</td><td>Reaproveitar lógica → PM-CONV-03</td></tr>
+        <tr><td class="mono">Experience.php::tracking</td><td>GPS com consentimento obrigatório, downsampling de pontos</td><td>Médio-alto</td><td>Reaproveitar lógica com hardening</td></tr>
+        <tr><td class="mono">Platform.php::OWNER_EMAIL</td><td>E-mail de dono hardcoded no código-fonte</td><td>Nenhum</td><td><strong>Não reaproveitar (Grupo 4)</strong></td></tr>
+        <tr><td class="mono">Runtime.php::environment()</td><td>Chave pública do Firebase hardcoded como default</td><td>Nenhum</td><td>Não aplicável ao nosso stack</td></tr>
+        <tr><td class="mono">Email.php::emailMessage</td><td>Template HTML com escape de XSS, Message-ID por idempotency key</td><td>Médio</td><td>Reaproveitar lógica, fase futura</td></tr>
+        <tr><td class="mono">Rs256Token.php</td><td>Verificação JWT RS256 hand-rolled, bloqueia confusão de algoritmo</td><td>Baixo p/ nós</td><td>Grupo 4, incompatibilidade de padrão</td></tr>
+        <tr><td class="mono">Jobs.php::deliverNotifications</td><td>Fila de e-mail com lease/retry/dead-letter</td><td>Médio</td><td>Reaproveitar lógica — nosso T5 já é superior</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Nota de segurança sobre a chave do Firebase hardcoded: chaves Web API do Firebase são, pela própria
+      documentação do Google, seguras para exposição pública — não é vulnerabilidade explorável por si só,
+      é problema de higiene de configuração.
+    </div>
+  </section>
+
+  <section id="e">
+    <h2>E. Matriz por recurso — cobertura completa dos domínios obrigatórios</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Recurso</th><th>Origem 0.4.11</th><th>Equivalente oficial</th><th>Decisão</th><th>Fase</th></tr></thead>
+      <tbody>
+        <tr><td>Cliente/Passageiro</td><td>passaporte, voo in/out, guardião p/ menor</td><td>Traveler (sem voo/guardião)</td><td><strong>FUNDIR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Família/Acompanhantes</td><td>guardianName/Email/Relationship</td><td>Não existe</td><td><strong>IMPORTAR/ADAPTAR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Parceiros</td><td>partnerCode, comissão automática</td><td>Commission só interna</td><td><strong>IMPORTAR/FUNDIR</strong></td><td>PM-CONV-04</td></tr>
+        <tr><td>Guias</td><td>guideUids, atribuição a grupo/veículo</td><td>Não existe</td><td><strong>IMPORTAR/ADAPTAR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Motoristas</td><td>driverUids</td><td>Não existe</td><td><strong>IMPORTAR/ADAPTAR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Fornecedores</td><td>kind, city, contact, services</td><td>Não existe</td><td><strong>IMPORTAR/ADAPTAR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Veículo turístico</td><td>capacidade, placa</td><td>Não existe</td><td><strong>IMPORTAR</strong> — não é KeroCar</td><td>PM-CONV-03</td></tr>
+        <tr><td>Grupo/Saída/Operação</td><td>crew+veículo+bookings, conflito de alocação</td><td>Trip (sem crew/veículo)</td><td><strong>FUNDIR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Roteiro/Paradas</td><td>lat/lng, fornecedor por parada</td><td>TripItineraryDay/Activity</td><td><strong>FUNDIR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Reserva/Booking</td><td>capacidade de oferta, versão de proposta</td><td>Booking (já real)</td><td><strong>FUNDIR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Proposta</td><td>versionada, gera offer</td><td>Proposal (já versionada)</td><td><strong>FUNDIR</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Pagamento</td><td><strong>Stripe real</strong> (checkout+webhook)</td><td>Payment (manual apenas)</td><td><strong>REAPROVEITAR LÓGICA</strong></td><td>PM-CONV-07</td></tr>
+        <tr><td>Comissão</td><td>bps, policyVersion, Gate próprio</td><td>Commission (já real)</td><td>FUNDIR conceitos</td><td>PM-CONV-04</td></tr>
+        <tr><td>Premiação</td><td>campanha com meta de vendas</td><td>Não existe</td><td><strong>IMPORTAR/FUNDIR</strong></td><td>PM-CONV-04</td></tr>
+        <tr><td>QR/Check-in/Embarque</td><td>token 24h, timezone Marrocos</td><td>Não existe</td><td><strong>IMPORTAR com hardening</strong></td><td>PM-CONV-03</td></tr>
+        <tr><td>Documentos</td><td>documentChecks auto-instanciado</td><td>TravelerDocument (já próximo)</td><td>Conceitos convergentes</td><td>PM-CONV-03</td></tr>
+        <tr><td>Notificações</td><td>fila lease/retry/dead-letter</td><td>Não existe ainda (autorizado)</td><td><strong>REAPROVEITAR LÓGICA</strong></td><td>Notifications Foundation</td></tr>
+        <tr><td>Aniversários</td><td>idempotente por ano</td><td>Não existe</td><td><strong>REAPROVEITAR LÓGICA</strong></td><td>fase de Notifications</td></tr>
+        <tr><td>Mapas/GPS</td><td>OpenStreetMap, consentimento</td><td>Não existe</td><td><strong>IMPORTAR com consentimento</strong></td><td>fase futura</td></tr>
+        <tr><td>Offline/PWA</td><td>cache só de shell estático</td><td>Não existe</td><td>AVALIAR — seguro</td><td>PM-CONV-10</td></tr>
+        <tr><td>Ouvidoria/Suporte</td><td>ticket + avaliação moderada</td><td>Não existe (só Inbox/CRM)</td><td><strong>IMPORTAR sem duplicar</strong></td><td>PM-CONV-04</td></tr>
+        <tr><td>Conteúdo/Publicidade</td><td>conteúdo editorial + anúncios internos</td><td>Não existe</td><td>AVALIAR quando gerar valor</td><td>não priorizado</td></tr>
+        <tr><td>i18n</td><td>PT/EN/ES/FR de interface</td><td>F2 (não traduz texto)</td><td>REAPROVEITAR catálogo</td><td>PM-CONV-05</td></tr>
+        <tr><td>Multiagência/Admin</td><td>agencies/{id}, papel network</td><td>Tenant (mais robusto)</td><td>Já resolvido — nosso é superior</td><td>—</td></tr>
+        <tr><td>Dados Firestore</td><td>20+ coleções sob agencies/{a}</td><td>PostgreSQL/Prisma, 42 models</td><td>Mapear 1:1, nunca migrar dado</td><td>PM-CONV-03+</td></tr>
+        <tr><td>Assets</td><td>28 imagens, logo, ícone</td><td>Site oficial tem os próprios</td><td>Avaliar caso a caso</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="f">
+    <h2>F. Quatro grupos de reaproveitamento</h2>
+
+    <h3>Grupo 1 — Reaproveitamento direto</h3>
+    <p><strong>Nenhum item.</strong> Nenhum código PHP é diretamente compatível com Next.js/TypeScript/Prisma — confirmado por leitura completa do backend.</p>
+
+    <h3>Grupo 2 — Reaproveitar lógica (reimplementar no oficial)</h3>
+    <ol>
+      <li>Fingerprint de sujeito em Gates — detectar mudança de estado entre aprovação e execução.</li>
+      <li>Idempotência universal por requestKey + hash de payload.</li>
+      <li>Checagem de conflito de alocação (veículo/guia/motorista × janela de datas).</li>
+      <li>Consentimento explícito + downsampling de pontos de rastreamento GPS.</li>
+      <li>Regras de validação de passageiro/passaporte (idade→guardião, validade vs. retorno).</li>
+      <li>Cálculo de comissão em basis points com arredondamento correto.</li>
+      <li>Webhook Stripe: verificação HMAC-SHA256 com tolerância de tempo e dedup por evento.</li>
+      <li>Fila de notificação com lease/retry exponencial/dead-letter (referência de parâmetros: 6 tentativas, backoff 30×2ⁿ capado em 3600s).</li>
+      <li>Cálculo de "aniversário devido" idempotente por ano.</li>
+    </ol>
+
+    <h3>Grupo 3 — Reaproveitar funcionalidade/UX (jornada, sem copiar layout)</h3>
+    <ol>
+      <li>Convite de passageiro menor por e-mail com token de reivindicação.</li>
+      <li>QR de chegada com sessão temporal — meeting point, janela de validade, fuso do destino.</li>
+      <li>"Minhas viagens" do passageiro — equivalente à futura Traveler Area V1.</li>
+      <li>Painel de resumo do parceiro — comissões + progresso de campanha.</li>
+      <li>Ticket de suporte com thread de mensagens + reabertura por status.</li>
+      <li>Avaliação/reclamação com moderação, resposta pública e score interno agregado.</li>
+    </ol>
+
+    <h3>Grupo 4 — Não reaproveitar</h3>
+    <ol>
+      <li><strong>E-mail do dono hardcoded no código-fonte</strong> — contraria nosso padrão via SecretProvider.</li>
+      <li><strong>Autenticação exclusiva por Google OAuth</strong> — incompatível com nosso modelo e-mail/senha.</li>
+      <li><strong>Isolamento multi-tenant só em código de aplicação</strong> — nosso RLS de banco é estritamente superior.</li>
+      <li><strong>JWT RS256 hand-rolled</strong> — não usamos JWT.</li>
+      <li><strong>Firestore como armazenamento</strong> — fora de cogitação, já decidido.</li>
+      <li><strong>list() de coleção inteira filtrado em memória PHP</strong> — não escalável.</li>
+      <li><strong>PHP 7.4 / polyfills de string</strong> — não aplicável ao nosso stack Node.</li>
+    </ol>
+  </section>
+
+  <section id="g">
+    <h2>G. Lista "NÃO PERDER NADA"</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Funcionalidade</th><th>Valor</th><th>Fase</th></tr></thead>
+      <tbody>
+        <tr><td>Operação turística com crew e detecção de conflito de alocação</td><td>Alto</td><td>PM-CONV-03</td></tr>
+        <tr><td>QR/check-in de chegada com sessão temporal</td><td>Alto</td><td>PM-CONV-03</td></tr>
+        <tr><td>Embarque como gatilho de comissão "a pagar"</td><td>Alto</td><td>PM-CONV-03/04</td></tr>
+        <tr><td>Progresso de parada em tempo real</td><td>Médio-alto</td><td>PM-CONV-03</td></tr>
+        <tr><td>Parceiro com código próprio e comissão automática</td><td>Alto</td><td>PM-CONV-04</td></tr>
+        <tr><td>Campanha de premiação com meta de vendas</td><td>Médio</td><td>PM-CONV-04</td></tr>
+        <tr><td>Ticket de suporte + avaliação moderada com score interno</td><td>Alto</td><td>PM-CONV-04</td></tr>
+        <tr><td>Rastreamento GPS com consentimento e limite de pontos</td><td>Médio</td><td>fase futura</td></tr>
+        <tr><td>Câmbio manual com fonte e data, base EUR</td><td>Médio</td><td>PM-CONV-07</td></tr>
+        <tr><td>Aniversário automático idempotente</td><td>Baixo-médio</td><td>Notifications</td></tr>
+        <tr><td><strong>Integração Stripe completa (checkout + webhook)</strong></td><td><strong>Alto</strong></td><td>PM-CONV-07</td></tr>
+        <tr><td>Envio de e-mail real (3 provedores)</td><td>Alto</td><td>fase futura</td></tr>
+        <tr><td>Catálogo de termos em 4 idiomas de interface</td><td>Médio</td><td>PM-CONV-05</td></tr>
+        <tr><td>Service worker seguro (nunca cacheia /api/)</td><td>Baixo (referência)</td><td>PM-CONV-10</td></tr>
+        <tr><td>Cadastro de saúde do passageiro com consentimento explícito</td><td>Médio (LGPD)</td><td>PM-CONV-03</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="h">
+    <h2>H. Matriz de regressões</h2>
+    <p>O que se perderia se a arquitetura do Valter substituísse a oficial.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Capacidade</th><th>Oficial</th><th>Valter 0.4.11</th><th>Risco</th></tr></thead>
+      <tbody>
+        <tr><td>Isolamento multi-tenant</td><td>RLS no banco, fail-closed</td><td>Só em código de aplicação; rules negam tudo, sem rede de segurança</td><td><strong style="color:var(--crit)">Crítico</strong></td></tr>
+        <tr><td>SecretProvider</td><td>Toda credencial via abstração</td><td>E-mail do dono e chave do Firebase hardcoded</td><td>Alto (higiene)</td></tr>
+        <tr><td>Gates/Audit</td><td>Sistema único testado</td><td>Gate próprio (com fingerprint), Audit mais simples</td><td>Médio</td></tr>
+        <tr><td>Cost Control</td><td>Medição→limite→alerta→bloqueio</td><td>Inexistente</td><td>N/A</td></tr>
+        <tr><td>Tool Broker/Yalla</td><td>Registry default-deny</td><td>Inexistente</td><td>N/A</td></tr>
+        <tr><td>Job/Execution Engine</td><td>T5: lease/heartbeat/retry, observável</td><td>Fila simples sem painel/Audit</td><td>Médio</td></tr>
+        <tr><td>Attribution</td><td>UTM/gclid/fbclid, testado</td><td>Só source/campaign simples</td><td>Baixo</td></tr>
+        <tr><td>Testes automatizados</td><td>468 testes, isolamento negativo</td><td><strong>Zero testes encontrados</strong></td><td>Alto</td></tr>
+        <tr><td>Autenticação</td><td>E-mail/senha, RBAC por tenant</td><td>Google OAuth exclusivo</td><td>Médio</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="i">
+    <h2>I. Rotas/páginas finais + Help Key proposto</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Rota</th><th>Papel</th><th>Origem</th><th>Decisão</th><th>Help Key</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">/dashboard</td><td>Painel</td><td>Oficial</td><td>manter</td><td class="mono">dashboard.overview</td></tr>
+        <tr><td class="mono">/leads, /leads/[id]</td><td>Vendas</td><td>Oficial</td><td>manter</td><td class="mono">leads.list / .detail</td></tr>
+        <tr><td class="mono">/inbox</td><td>Atendimento</td><td>Oficial</td><td>manter</td><td class="mono">inbox.overview</td></tr>
+        <tr><td class="mono">/canais</td><td>Config. WhatsApp</td><td>Oficial</td><td>manter</td><td class="mono">canais.whatsapp</td></tr>
+        <tr><td class="mono">/gates</td><td>Aprovações</td><td>Oficial</td><td>manter</td><td class="mono">gates.overview</td></tr>
+        <tr><td class="mono">/custos</td><td>Cost Control</td><td>Oficial</td><td>manter</td><td class="mono">custos.overview</td></tr>
+        <tr><td class="mono">/politica-comercial</td><td>Política comercial</td><td>Oficial</td><td>manter</td><td class="mono">politica.overview</td></tr>
+        <tr><td class="mono">/documentos</td><td>Requisitos de documento</td><td>Oficial</td><td>manter</td><td class="mono">documentos.overview</td></tr>
+        <tr><td class="mono">/viagens, /viagens/[id]</td><td>Trip Operation</td><td>Oficial</td><td>manter</td><td class="mono">viagens.list / .detail</td></tr>
+        <tr><td class="mono">/jobs</td><td>Job Engine</td><td>Oficial</td><td>manter</td><td class="mono">jobs.overview</td></tr>
+        <tr><td class="mono">/operacao/grupos <em>(proposta)</em></td><td>Grupos/crew/veículo</td><td>0.4.11</td><td>REQUER PM-CONV-03</td><td class="mono">operacao.grupos</td></tr>
+        <tr><td class="mono">/operacao/checkin <em>(proposta)</em></td><td>QR/chegada/embarque</td><td>0.4.11</td><td>REQUER PM-CONV-03</td><td class="mono">operacao.checkin</td></tr>
+        <tr><td class="mono">/parceiros <em>(proposta)</em></td><td>Parceiros/comissão</td><td>0.4.11</td><td>REQUER PM-CONV-04</td><td class="mono">parceiros.overview</td></tr>
+        <tr><td class="mono">/ouvidoria <em>(proposta)</em></td><td>Tickets + avaliações</td><td>0.4.11</td><td>REQUER PM-CONV-04</td><td class="mono">ouvidoria.overview</td></tr>
+        <tr><td class="mono">/viagens/[id]/rastreamento <em>(proposta)</em></td><td>GPS com consentimento</td><td>0.4.11</td><td>AVALIAR</td><td class="mono">rastreamento.overview</td></tr>
+      </tbody>
+    </table></div>
+    <p>Locales previstos para todas: PT-BR / PT-PT / EN / ES / FR.</p>
+  </section>
+
+  <section id="j">
+    <h2>J. Bloqueadores de produção</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Bloqueador</th><th>Risco</th><th>Fase</th><th>Critério de resolução</th></tr></thead>
+      <tbody>
+        <tr><td>Nenhum gateway de pagamento real conectado</td><td>Alto</td><td>PM-CONV-07</td><td>Gateway homologado, webhook validado</td></tr>
+        <tr><td>Domínio operacional turístico ausente</td><td>Alto</td><td>PM-CONV-03</td><td>Domínio único, RLS/RBAC/Audit, testes</td></tr>
+        <tr><td>Sem envio de e-mail real</td><td>Médio</td><td>Notifications</td><td>Provedor configurado e verificado</td></tr>
+        <tr><td>WhatsApp Business (WABA) não homologado</td><td>Médio</td><td>fora desta rodada</td><td>Conta de produção homologada</td></tr>
+        <tr><td>Sem tradução automática de conversa</td><td>Médio</td><td>PM-CONV-06</td><td>Original + tradução preservados</td></tr>
+        <tr><td><code>git init</code> não executado</td><td>Baixo</td><td>—</td><td>Fundador autoriza</td></tr>
+        <tr><td>Nenhum teste automatizado na 0.4.11</td><td>Médio</td><td>PM-CONV-03+</td><td>Toda regra portada nasce com teste</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="k">
+    <h2>K. Especificação proposta do PM-CONV-03 (Core Turístico)</h2>
+    <p><strong>NÃO EXECUTAR</strong> — preparada como ponto de partida para a próxima autorização.</p>
+    <p><strong>Escopo</strong>: Passageiro (passaporte/voo/guardião), Guia, Motorista, Fornecedor, Veículo, Grupo (crew+veículo+reservas, conflito de alocação), QR/Check-in/Embarque.</p>
+    <p><strong>Entidades novas propostas</strong>: <code>Guide</code>, <code>Driver</code>, <code>Supplier</code>, <code>Vehicle</code>, <code>TripGroup</code>, <code>ArrivalSession</code>, <code>Arrival</code>, <code>Boarding</code>. Extensão de <code>Traveler</code>.</p>
+    <p><strong>Migrations</strong>: ≥2 (schema + RLS). <strong>RBAC</strong>: <code>operacao.grupos.view/.manage</code>, <code>operacao.checkin.manage</code>. <strong>RLS</strong>: fail-closed em toda entidade nova, teste de isolamento obrigatório. <strong>Audit</strong>: <code>GRUPO_CRIADO</code>, <code>CHECKIN_QR_GERADO</code>, <code>CHEGADA_CONFIRMADA</code>, <code>EMBARQUE_CONFIRMADO</code>.</p>
+    <p><strong>Definition of Done</strong>: mesmo padrão das 5 etapas já concluídas do PM-NIGHT-RUN-02 — testes verdes, typecheck/build limpos, RLS testado, zero mudança de layout, relatório de fechamento individual.</p>
+  </section>
+
+  <section id="tg">
+    <h2>Tabela G — Integrações (estado real, não presumido)</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Integração</th><th>Oficial</th><th>Valter 0.4.11</th><th>Estado real</th></tr></thead>
+      <tbody>
+        <tr><td>WhatsApp/Meta</td><td>Cloud API real</td><td>Não presente</td><td><strong style="color:var(--ok)">REAL</strong> (oficial)</td></tr>
+        <tr><td>Stripe</td><td>Não existe</td><td>Checkout+webhook real, desativado por config</td><td><strong style="color:var(--warn)">PARCIAL</strong></td></tr>
+        <tr><td>E-mail</td><td>Não existe</td><td>Real, não configurado</td><td><strong style="color:var(--warn)">PARCIAL</strong></td></tr>
+        <tr><td>Firebase Auth (Google)</td><td>Não existe</td><td>Real, verificado</td><td><strong style="color:var(--ok)">REAL</strong>, não é nosso modelo</td></tr>
+        <tr><td>Firestore</td><td>Não existe</td><td>Real, sem RLS de banco</td><td><strong style="color:var(--ok)">REAL</strong>, com risco (§H)</td></tr>
+        <tr><td>OpenAI/Anthropic/ElevenLabs</td><td>Não presente</td><td>Não presente</td><td>NÃO ENCONTRADO</td></tr>
+        <tr><td>Ads/GA4/Search Console</td><td>Não presente</td><td>Não presente</td><td>NÃO ENCONTRADO</td></tr>
+        <tr><td>Maps (OpenStreetMap)</td><td>Não existe</td><td>Real</td><td><strong style="color:var(--ok)">REAL</strong></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="veredito">
+    <h2>44. Veredito</h2>
+    <div class="verdict">
+      <h3>PM-CONV-02 CONCLUÍDO, com uma limitação declarada.</h3>
+      <p>
+        Concluído: localização física de ambos os projetos confirmada com evidência; separação completa da
+        entrega 0.4.11 por categoria; <strong>leitura integral de 100% do código de domínio próprio da 0.4.11</strong>;
+        mapas documento→código e código→funcionalidade com evidência de arquivo; matriz de recursos cobrindo
+        todos os domínios exigidos; quatro grupos de reaproveitamento preenchidos; lista "não perder nada";
+        matriz de regressões; inventário de rotas com Help Key proposto; bloqueadores de produção;
+        especificação (não executada) do PM-CONV-03.
+      </p>
+      <p style="margin-bottom:0;">
+        <strong>Limitação declarada</strong>: os dois documentos longos do Valter (7.165 linhas combinadas) não
+        foram lidos linha a linha — consultados pontualmente (LEIA-ME.md na íntegra). Isso não compromete a
+        matriz, ancorada em código real lido por completo.
+      </p>
+    </div>
+  </section>
+
+  <div class="stop">
+    <div class="big">45 · PARAR</div>
+    <p style="max-width:56ch; margin:10px auto 0;">
+      Relatório encerrado aqui. Nada foi alterado no código, schema, layout ou configuração do sistema oficial.
+      <strong>PM-CONV-03 não foi iniciado</strong> — apenas especificado em §K. Aguardando autorização do fundador.
+    </p>
+  </div>
+</main>
+
+<textarea id="raw" readonly>PM-CONV-02 — Inventário Físico, Rastreabilidade e Congelamento da Convergência
+
+Modo: AUDITORIA / INVENTÁRIO / RASTREABILIDADE / PLANEJAMENTO. Nada foi implementado, alterado, migrado ou commitado nesta rodada.
+
+Referência obrigatória usada: PM_CONVERGENCIA_MESTRE_v1.0_CODE.docx (lido integralmente). Decisão arquitetural já tomada nesse documento — não rediscutida aqui: a fundação oficial (Next.js/TypeScript + PostgreSQL/Prisma + Tenant Core/RLS) permanece; PHP/Firebase/Firestore da entrega 0.4.11 nunca substituem essa fundação; nenhuma alteração de layout é autorizada.
+
+(Este documento é a íntegra do relatório PM-CONV-02. Use "Copiar documento inteiro" no topo da página para colar o texto completo — versão renderizada acima é a mesma informação em formato de leitura.)
+
+Ver o PDF/arquivo enviado no chat (PM_CONV_02_INVENTARIO.md) para o texto-fonte completo em Markdown, seção por seção: metodologia, inventário oficial (A), inventário 0.4.11 (B), mapas documento→código e código→funcionalidade (C, D), matriz por recurso (E), quatro grupos de reaproveitamento (F), lista não-perder-nada (G), matriz de regressões (H), rotas e Help Key (I), bloqueadores de produção (J), especificação do PM-CONV-03 (K), tabela de integrações, veredito e parada.
+</textarea>
+
+<script>
+(function(){
+  var btn = document.getElementById('copyBtn');
+  var label = document.getElementById('copyLabel');
+  var raw = document.getElementById('raw');
+  var defaultLabel = label.textContent;
+  btn.addEventListener('click', function(){
+    var text = raw.value;
+    function done(ok){
+      label.textContent = ok ? 'Copiado ✓' : 'Não foi possível copiar';
+      setTimeout(function(){ label.textContent = defaultLabel; }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ fallback(); });
+    } else {
+      fallback();
+    }
+    function fallback(){
+      try{
+        raw.hidden = false; raw.style.position='fixed'; raw.style.opacity='0';
+        raw.focus(); raw.select();
+        var ok = document.execCommand('copy');
+        raw.hidden = true; raw.style.position='absolute';
+        done(ok);
+      }catch(e){ done(false); }
+    }
+  });
+})();
+</script>

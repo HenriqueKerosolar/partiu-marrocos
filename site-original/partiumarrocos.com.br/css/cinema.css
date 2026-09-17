@@ -1,0 +1,466 @@
+/* ============================================================
+   PARTIU MARROCOS — A VIAGEM EM LONGA-METRAGEM
+   css/cinema.css · sala escura, luz de projetor, película
+   ============================================================ */
+:root{
+  --night:#06080F; --night-2:#0A0F1C; --indigo:#0D2140;
+  --amber:#F2A93B; --amber-lt:#F8C972; --ember:#D24E1C;
+  --bone:#EDE4D3; --haze:rgba(237,228,211,.56); --haze-2:rgba(237,228,211,.28);
+  --line:rgba(237,228,211,.11);
+  --bar:52px; --ease:cubic-bezier(.22,.9,.24,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+body{background:var(--night);color:var(--bone);font-family:"Outfit",sans-serif;font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--amber);color:var(--night)}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;background:none;border:0;color:inherit;cursor:pointer}
+.mono{font-family:"Space Mono",monospace}
+
+/* ---------- ambiente ---------- */
+.grain{position:fixed;inset:-100px;z-index:90;pointer-events:none;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+  animation:grain 900ms steps(4) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-32px,18px)}50%{transform:translate(22px,-26px)}75%{transform:translate(-14px,-12px)}100%{transform:translate(0,0)}}
+.vignette{position:fixed;inset:0;z-index:89;pointer-events:none;background:radial-gradient(ellipse 118% 96% at 50% 46%,transparent 58%,rgba(0,0,0,.5))}
+
+/* ---------- letterbox ---------- */
+.bar{position:fixed;left:0;right:0;height:var(--bar);z-index:120;background:#000;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.14em;color:var(--haze-2)}
+.bar.top{top:0;border-bottom:1px solid rgba(237,228,211,.08)}
+.bar.bottom{bottom:0;border-top:1px solid rgba(237,228,211,.08)}
+.bar b{color:var(--bone);font-weight:700}
+.bar .amber{color:var(--amber)}
+.rec{display:flex;align-items:center;gap:8px}
+.rec i{width:8px;height:8px;border-radius:50%;background:var(--ember);animation:blink 1.4s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.slate{transition:opacity .35s}
+.slate.swap{opacity:0}
+.cta-mini{color:var(--night)!important;background:var(--amber);padding:7px 14px;border-radius:2px;font-weight:700;letter-spacing:.12em;transition:background .25s}
+.cta-mini:hover{background:var(--amber-lt)}
+.progress{position:absolute;left:0;bottom:calc(100% + 0px);height:2px;width:100%;transform-origin:left;transform:scaleX(0);background:var(--amber)}
+.bar-menu{display:flex;gap:20px}
+.bar-menu a{color:var(--haze-2);transition:color .25s;letter-spacing:.18em}
+.bar-menu a:hover{color:var(--amber)}
+
+/* ---------- cold open ---------- */
+.cold{position:fixed;inset:0;z-index:300;background:var(--night);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:34px;transition:opacity .8s var(--ease),visibility .8s}
+.cold.done{opacity:0;visibility:hidden}
+.cold .reel{position:relative;width:min(280px,58vw);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cold .reel::before,.cold .reel::after{content:"";position:absolute;inset:0;border-radius:50%}
+.cold .reel::before{border:1px solid rgba(237,228,211,.25)}
+.cold .reel::after{inset:14%;border:1px solid rgba(237,228,211,.14)}
+.cold .cross-v,.cold .cross-h{position:absolute;background:rgba(237,228,211,.14)}
+.cold .cross-v{width:1px;top:-8%;bottom:-8%;left:50%}
+.cold .cross-h{height:1px;left:-8%;right:-8%;top:50%}
+.cold .sweep{position:absolute;inset:0;border-radius:50%}
+.cold .num{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(84px,20vw,140px);color:var(--bone);line-height:1}
+.cold .studio{font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.5em;color:var(--haze);text-transform:uppercase;text-align:center;padding-left:.5em}
+.cold .studio b{color:var(--amber)}
+.cold .skip{position:absolute;bottom:34px;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.3em;color:var(--haze-2);padding:10px}
+.cold .skip:hover{color:var(--bone)}
+
+/* ---------- base das cenas ---------- */
+main{position:relative;z-index:1}
+.scene{position:relative}
+.wrap{width:min(1500px,100%);margin:0 auto;padding-left:clamp(24px,5vw,80px);padding-right:clamp(24px,5vw,80px)}
+.slug{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.3em;color:var(--haze);text-transform:uppercase;display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.slug::before{content:"";width:34px;height:1px;background:var(--amber)}
+.h2{font-family:"Fraunces",serif;font-weight:800;line-height:.98;letter-spacing:-.01em;font-size:clamp(2.3rem,5.4vw,4.8rem);color:var(--bone)}
+.h2 em{font-style:italic;font-weight:300;color:var(--amber)}
+.lead{color:var(--haze);line-height:1.75;font-size:clamp(.95rem,1.15vw,1.1rem);max-width:520px}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:34px;flex-wrap:wrap;margin-bottom:6vh}
+.pxwrap{position:absolute;inset:0;overflow:hidden}
+.pximg{position:absolute;inset:-14% 0;background-size:cover;background-position:center;will-change:transform}
+
+/* ---------- CENA 01 · TÍTULO ---------- */
+.s-title{min-height:100svh;display:flex;align-items:flex-end;overflow:hidden}
+.s-title .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,8,15,.66) 0%,rgba(6,8,15,.08) 36%,rgba(6,8,15,.16) 60%,rgba(6,8,15,.95) 100%),linear-gradient(90deg,rgba(6,8,15,.55),transparent 55%)}
+.s-title .inner{position:relative;z-index:2;width:min(1500px,100%);margin:0 auto;padding:0 clamp(24px,5vw,80px) calc(var(--bar) + 7.5vh)}
+.kicker{font-family:"Space Mono",monospace;font-size:clamp(.6rem,.9vw,.76rem);letter-spacing:.46em;text-transform:uppercase;color:var(--amber);margin-bottom:2.2vh}
+.h-partiu{font-family:"Fraunces",serif;font-style:italic;font-weight:300;font-size:clamp(1.5rem,3.4vw,3.2rem);color:var(--bone)}
+.h-title{font-family:"Fraunces",serif;font-weight:800;line-height:.88;letter-spacing:-.015em;font-size:clamp(3.4rem,15.4vw,14.4rem);color:var(--bone);text-shadow:0 10px 60px rgba(0,0,0,.5)}
+.h-title .o{color:var(--amber);display:inline-block}
+.h-title .ch{display:inline-block;will-change:transform}
+.subtitle{margin-top:3.2vh;max-width:560px;font-size:clamp(.95rem,1.2vw,1.12rem);line-height:1.65;color:var(--haze)}
+.subtitle b{color:var(--bone);font-weight:500}
+.title-meta{display:flex;gap:clamp(18px,3vw,38px);margin-top:4vh;flex-wrap:wrap;font-family:"Space Mono",monospace;font-size:.64rem;letter-spacing:.2em;color:var(--haze-2);text-transform:uppercase}
+.title-meta b{color:var(--amber);font-weight:700;font-size:.9rem}
+.scroll-cue{position:absolute;right:clamp(24px,4vw,60px);bottom:calc(var(--bar) + 30px);z-index:3;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.34em;color:var(--haze);writing-mode:vertical-rl;display:flex;align-items:center;gap:14px;text-transform:uppercase}
+.scroll-cue::after{content:"";width:1px;height:64px;background:linear-gradient(var(--amber),transparent);animation:drip 2.2s var(--ease) infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- CENA 02 · TRAILER + MOTIVOS ---------- */
+.s-trailer{padding:calc(var(--bar) + 13vh) 0 10vh}
+.tr-line{font-family:"Fraunces",serif;font-weight:300;line-height:1.12;font-size:clamp(1.9rem,5vw,4.8rem);color:var(--haze-2);max-width:1180px}
+.tr-line + .tr-line{margin-top:5vh}
+.tr-line em{font-style:italic;color:var(--bone)}
+.tr-line .hi{color:var(--amber);font-style:italic}
+.tr-line.right{text-align:right;margin-left:auto}
+.tr-line .w{display:inline-block;will-change:transform,opacity}
+.takes{margin-top:12vh;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.take{background:var(--night);padding:clamp(22px,2.6vw,36px);position:relative;transition:background .4s}
+.take:hover{background:var(--night-2)}
+.take .tk{font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:16px}
+.take h3{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.1rem,1.6vw,1.45rem);color:var(--bone);margin-bottom:12px;line-height:1.15}
+.take p{color:var(--haze);font-size:.88rem;line-height:1.6}
+.take .big{position:absolute;right:18px;top:14px;font-family:"Fraunces",serif;font-style:italic;font-weight:300;font-size:2.4rem;color:rgba(237,228,211,.07)}
+
+/* ---------- CENA 03 · FILMSTRIP ---------- */
+.s-strip{overflow:hidden}
+.strip-stick{height:100svh;display:flex;align-items:center;position:relative}
+.strip-head{position:absolute;top:calc(var(--bar) + 22px);left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:baseline;padding:0 clamp(24px,5vw,70px)}
+.strip-head h2{font-family:"Fraunces",serif;font-style:italic;font-weight:600;font-size:clamp(1.5rem,3vw,2.5rem);color:var(--bone)}
+.strip-count{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.24em;color:var(--haze)}
+.strip-count b{color:var(--amber);font-size:1rem}
+.track{display:flex;gap:clamp(18px,2.4vw,34px);padding:0 8vw;will-change:transform;align-items:center}
+.frame{position:relative;flex:0 0 auto;width:clamp(300px,42vw,600px);background:#000;padding:25px 10px;border-radius:4px;cursor:pointer}
+.frame::before,.frame::after{content:"";position:absolute;left:14px;right:14px;height:12px;background-image:radial-gradient(circle 3.5px at center,rgba(237,228,211,.38) 99%,transparent 100%);background-size:26px 12px;background-position:center;background-repeat:repeat-x}
+.frame::before{top:7px}
+.frame::after{bottom:7px}
+.frame .ph{position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:2px}
+.frame .ph img{width:100%;height:100%;object-fit:cover;transform:scale(1.07);transition:transform 1.6s var(--ease);filter:saturate(.92) contrast(1.04)}
+.frame:hover .ph img{transform:scale(1)}
+.frame .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 52%,rgba(0,0,0,.74))}
+.frame .cap{position:absolute;left:26px;right:26px;bottom:40px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
+.frame .cap h3{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(1.4rem,2.5vw,2.3rem);color:var(--bone);line-height:1}
+.frame .cap small{font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.24em;color:var(--amber);text-transform:uppercase;white-space:nowrap;padding-bottom:5px}
+.frame .open-tag{position:absolute;top:36px;right:26px;font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.22em;color:rgba(237,228,211,.55);text-transform:uppercase;opacity:0;transition:opacity .4s}
+.frame:hover .open-tag{opacity:1}
+
+/* ---------- MODAL destino (ficha técnica) ---------- */
+.dmodal{position:fixed;inset:0;z-index:220;display:none;align-items:center;justify-content:center;padding:calc(var(--bar) + 16px) 18px}
+.dmodal.open{display:flex}
+.dmodal .veil{position:absolute;inset:0;background:rgba(3,5,10,.86);backdrop-filter:blur(6px)}
+.dsheet{position:relative;z-index:2;width:min(1060px,100%);max-height:calc(100svh - var(--bar)*2 - 32px);overflow:auto;background:var(--night-2);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:1.06fr .94fr}
+.dsheet .photo{position:relative;min-height:380px}
+.dsheet .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dsheet .photo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 60%,rgba(10,15,28,.92))}
+.dsheet .info{padding:clamp(26px,3.4vw,48px)}
+.dsheet .k{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.4em;color:var(--amber);text-transform:uppercase;margin-bottom:14px}
+.dsheet h3{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(1.9rem,3.4vw,3rem);line-height:1;margin-bottom:18px}
+.dsheet p{color:var(--haze);line-height:1.75;font-size:.95rem}
+.dsheet .facts{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px}
+.dsheet .facts span{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.08em;color:var(--bone);border:1px solid var(--line);padding:8px 12px;border-radius:2px}
+.dsheet .dnav{margin-top:28px;display:flex;gap:12px;align-items:center;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.22em;color:var(--haze)}
+.dsheet .dnav button{border:1px solid var(--line);width:42px;height:42px;border-radius:2px;color:var(--bone);font-size:1rem;transition:border-color .25s,color .25s}
+.dsheet .dnav button:hover{border-color:var(--amber);color:var(--amber)}
+.dclose{position:absolute;top:14px;right:14px;z-index:3;width:44px;height:44px;border:1px solid var(--line);border-radius:2px;background:rgba(6,8,15,.6);color:var(--bone);font-size:1.2rem;transition:border-color .25s,color .25s}
+.dclose:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ---------- CENA 04 · A ROTA ---------- */
+.s-route{padding:calc(var(--bar) + 12vh) 0 12vh;overflow:hidden}
+.route-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:clamp(30px,5vw,80px);align-items:center}
+.stops{margin-top:4.4vh;display:flex;flex-direction:column}
+.stop{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.16em;color:var(--haze);text-transform:uppercase;transition:color .35s,padding-left .35s}
+.stop b{color:var(--haze-2);font-weight:700;min-width:2.2em;transition:color .35s}
+.stop span:last-child{margin-left:auto;color:var(--haze-2);letter-spacing:.08em;text-align:right}
+.stop.lit{color:var(--bone);padding-left:8px}
+.stop.lit b{color:var(--amber)}
+.route-map{position:relative;aspect-ratio:1/1.05;background:radial-gradient(120% 120% at 70% 20%,#101A30 0%,var(--night) 68%);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.route-map svg{position:absolute;inset:0;width:100%;height:100%}
+.route-map .rpath{fill:none;stroke:var(--ember);stroke-width:2.4;stroke-dasharray:6 9;stroke-linecap:round}
+.route-map .rghost{fill:none;stroke:rgba(237,228,211,.1);stroke-width:1;stroke-dasharray:2 6}
+.route-map .pt circle{fill:var(--night);stroke:var(--amber);stroke-width:2;transition:fill .4s}
+.route-map .pt.lit circle{fill:var(--amber)}
+.route-map .pt text{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.16em;fill:var(--haze);text-transform:uppercase;transition:fill .4s}
+.route-map .pt.lit text{fill:var(--bone)}
+.route-km{position:absolute;left:22px;bottom:18px;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.26em;color:var(--haze);text-transform:uppercase}
+.route-km b{color:var(--amber);font-size:1.15rem;font-weight:700}
+
+/* ---------- CENA 05 · ROTEIROS ---------- */
+.s-days{padding:calc(var(--bar) + 12vh) 0 12vh;background:var(--night-2)}
+.day-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6vh}
+.day-tab{font-family:"Space Mono",monospace;font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--haze);border:1px solid var(--line);border-radius:2px;padding:13px 18px;transition:all .3s}
+.day-tab b{color:var(--amber);margin-right:8px}
+.day-tab:hover{color:var(--bone);border-color:rgba(237,228,211,.3)}
+.day-tab.on{color:var(--night);background:var(--amber);border-color:var(--amber)}
+.day-tab.on b{color:var(--night)}
+.board{position:relative;display:none;grid-template-columns:1fr 1fr;gap:0 clamp(28px,4vw,64px)}
+.board.on{display:grid}
+.board::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.day{position:relative;padding:26px 0 26px 0;grid-column:1;text-align:right;padding-right:clamp(28px,4vw,64px)}
+.day:nth-child(even){grid-column:2;text-align:left;padding-right:0;padding-left:clamp(28px,4vw,64px)}
+.day::after{content:"";position:absolute;top:38px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 5px rgba(242,169,59,.14)}
+.day{grid-row:auto}
+.day:nth-child(odd)::after{right:-5px}
+.day:nth-child(even)::after{left:-4px}
+.day .dnum{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:8px}
+.day h4{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.1rem,1.7vw,1.5rem);margin-bottom:8px}
+.day p{color:var(--haze);font-size:.88rem;line-height:1.6;max-width:420px;display:inline-block}
+.day .chips{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.day:nth-child(even) .chips{justify-content:flex-start}
+.day .chips i{font-style:normal;font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.12em;color:var(--haze-2);border:1px solid var(--line);padding:5px 9px;border-radius:2px;text-transform:uppercase}
+.board-note{margin-top:6vh;text-align:center;font-family:"Space Mono",monospace;font-size:.64rem;letter-spacing:.2em;color:var(--haze);text-transform:uppercase}
+.board-note a{color:var(--amber)}
+
+/* ---------- CENA 06 · EM CARTAZ ---------- */
+.s-posters{padding:calc(var(--bar) + 12vh) 0 12vh}
+.posters{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,2.4vw,34px)}
+.poster{position:relative;aspect-ratio:2/3;overflow:hidden;border-radius:4px;background:#000;transition:transform .6s var(--ease)}
+.poster:hover{transform:translateY(-10px)}
+.poster>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.9);transition:transform 1.4s var(--ease)}
+.poster:hover>img{transform:scale(1.05)}
+.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,8,15,.42),transparent 30%,transparent 42%,rgba(6,8,15,.96) 82%)}
+.poster .top-line{position:absolute;top:18px;left:20px;right:20px;z-index:2;display:flex;justify-content:space-between;font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.3em;color:var(--haze);text-transform:uppercase}
+.poster .body{position:absolute;left:22px;right:22px;bottom:20px;z-index:2}
+.poster .ep{font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.36em;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.poster h3{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(1.6rem,2.4vw,2.4rem);line-height:.98;margin-bottom:10px}
+.poster h3 em{font-style:italic;font-weight:300}
+.poster .sin{color:var(--haze);font-size:.84rem;line-height:1.5;margin-bottom:12px}
+.poster .inc{list-style:none;margin-bottom:14px}
+.poster .inc li{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.06em;color:rgba(237,228,211,.75);padding:4px 0;border-bottom:1px dashed rgba(237,228,211,.12)}
+.poster .inc li::before{content:"◆ ";color:var(--amber);font-size:.5rem}
+.poster .price{display:flex;align-items:baseline;gap:10px;border-top:1px solid rgba(237,228,211,.18);padding-top:12px;font-family:"Space Mono",monospace}
+.poster .price small{font-size:.56rem;letter-spacing:.2em;color:var(--haze-2);text-transform:uppercase}
+.poster .price b{color:var(--amber);font-size:1.05rem;margin-left:auto}
+.poster .book{margin-top:12px;display:block;text-align:center;font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--night);background:var(--amber);padding:13px;border-radius:2px;transition:background .25s}
+.poster .book:hover{background:var(--amber-lt)}
+.poster.featured{outline:1px solid rgba(242,169,59,.5);outline-offset:6px}
+.poster .fea-tag{position:absolute;top:48px;left:20px;z-index:2;background:var(--amber);color:var(--night);font-family:"Space Mono",monospace;font-size:.54rem;font-weight:700;letter-spacing:.24em;padding:6px 10px;border-radius:2px;text-transform:uppercase}
+.posters-note{margin-top:5vh;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.16em;color:var(--haze);text-transform:uppercase;text-align:center;line-height:2}
+.posters-note a{color:var(--amber)}
+
+/* ---------- CENA 07 · EXPERIÊNCIAS ---------- */
+.s-exp{padding:calc(var(--bar) + 12vh) 0 12vh;background:var(--night-2)}
+.exps{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,1.8vw,24px)}
+.exp{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:4px;cursor:default}
+.exp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.85);transform:scale(1.04);transition:transform 1.3s var(--ease),filter .6s}
+.exp:hover img{transform:scale(1.12);filter:saturate(1)}
+.exp::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(6,8,15,.88))}
+.exp .cap{position:absolute;left:18px;right:18px;bottom:16px;z-index:2}
+.exp .cap h3{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1rem,1.5vw,1.3rem);margin-bottom:6px}
+.exp .cap p{color:var(--haze);font-size:.78rem;line-height:1.5;max-height:0;opacity:0;overflow:hidden;transition:max-height .6s var(--ease),opacity .6s}
+.exp:hover .cap p{max-height:80px;opacity:1}
+.exp .tk{position:absolute;top:14px;left:16px;z-index:2;font-family:"Space Mono",monospace;font-size:.54rem;letter-spacing:.26em;color:var(--amber);text-transform:uppercase}
+
+/* ---------- CENA 08 · SABOR ---------- */
+.s-food{padding:calc(var(--bar) + 11vh) 0 12vh;overflow:hidden}
+.marquee{white-space:nowrap;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px 0;margin-bottom:8vh}
+.marquee .mq{display:inline-block;animation:mq 34s linear infinite;font-family:"Fraunces",serif;font-style:italic;font-weight:300;font-size:clamp(1.4rem,2.6vw,2.3rem);color:var(--haze-2)}
+.marquee .mq b{color:var(--amber);font-weight:300;margin:0 .6em}
+@keyframes mq{to{transform:translateX(-50%)}}
+.dishes{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,1.6vw,22px)}
+.dish{position:relative;aspect-ratio:3/4;overflow:hidden;border-radius:4px}
+.dish img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.9);transform:scale(1.03);transition:transform 1.3s var(--ease)}
+.dish:hover img{transform:scale(1.1)}
+.dish::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(6,8,15,.92))}
+.dish .cap{position:absolute;left:16px;right:16px;bottom:14px;z-index:2}
+.dish h3{font-family:"Fraunces",serif;font-weight:600;font-size:1.05rem;margin-bottom:5px}
+.dish p{color:var(--haze);font-size:.74rem;line-height:1.5}
+
+/* ---------- CENA 09 · ESPIAR (tour) ---------- */
+.s-peek{padding:calc(var(--bar) + 11vh) 0 12vh;background:var(--night-2)}
+.peeks{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,1.8vw,24px)}
+.peek{position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:4px;cursor:pointer}
+.peek img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.peek:hover img{transform:scale(1.07)}
+.peek::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(6,8,15,.85))}
+.peek .cap{position:absolute;left:16px;bottom:14px;z-index:2;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--bone)}
+.peek .cap b{color:var(--amber);display:block;margin-bottom:4px;font-size:.56rem;letter-spacing:.3em}
+.peek .exp360{position:absolute;top:12px;right:14px;z-index:2;font-family:"Space Mono",monospace;font-size:.54rem;letter-spacing:.24em;color:var(--haze);text-transform:uppercase}
+/* lightbox pan */
+.lb{position:fixed;inset:0;z-index:230;display:none;background:rgba(3,5,10,.94)}
+.lb.open{display:block}
+.lb .stage{position:absolute;inset:calc(var(--bar) + 10px) 0;overflow:hidden;cursor:grab}
+.lb .stage.grab{cursor:grabbing}
+.lb .stage img{position:absolute;top:50%;left:50%;height:100%;min-width:140%;object-fit:cover;transform:translate(-50%,-50%) scale(1.35);will-change:transform;user-select:none;pointer-events:none}
+.lb .cap{position:absolute;left:26px;bottom:calc(var(--bar) + 22px);z-index:2;font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.24em;text-transform:uppercase}
+.lb .cap b{color:var(--amber);display:block;font-size:.56rem;letter-spacing:.32em;margin-bottom:6px}
+.lb .hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--bar) + 22px);font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.26em;color:var(--haze);text-transform:uppercase}
+.lb .x{position:absolute;top:calc(var(--bar) + 16px);right:20px;z-index:3;width:46px;height:46px;border:1px solid var(--line);border-radius:2px;color:var(--bone);font-size:1.2rem;background:rgba(6,8,15,.6)}
+.lb .nav{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:46px;height:46px;border:1px solid var(--line);border-radius:2px;color:var(--bone);font-size:1.1rem;background:rgba(6,8,15,.6)}
+.lb .prev{left:18px}.lb .next{right:18px}
+.lb .nav:hover,.lb .x:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ---------- CENA 10 · VÍDEO ---------- */
+.s-video{padding:calc(var(--bar) + 11vh) 0 12vh}
+.vcard{position:relative;aspect-ratio:21/9;overflow:hidden;border-radius:6px;cursor:pointer}
+.vcard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.85)}
+.vcard::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 80% at 50% 50%,rgba(6,8,15,.25),rgba(6,8,15,.78))}
+.vcard .play{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.vcard .pbtn{width:92px;height:92px;border-radius:50%;border:1px solid rgba(237,228,211,.4);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--bone);background:rgba(6,8,15,.4);backdrop-filter:blur(4px);transition:transform .5s var(--ease),border-color .3s}
+.vcard:hover .pbtn{transform:scale(1.12);border-color:var(--amber)}
+.vcard .play span{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.34em;color:var(--haze);text-transform:uppercase}
+.vnote{margin-top:20px;text-align:center;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.2em;color:var(--haze-2);text-transform:uppercase}
+
+/* ---------- CENA 11 · VOCÊ SABIA ---------- */
+.s-facts{padding:calc(var(--bar) + 11vh) 0 12vh;background:var(--night-2)}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.fact{background:var(--night-2);padding:clamp(22px,2.6vw,34px);transition:background .4s}
+.fact:hover{background:var(--night)}
+.fact .fi{font-size:1.5rem;margin-bottom:14px;display:block}
+.fact h3{font-family:"Fraunces",serif;font-weight:600;font-size:1.12rem;margin-bottom:10px;line-height:1.2}
+.fact p{color:var(--haze);font-size:.85rem;line-height:1.62}
+
+/* ---------- CENA 12 · A CRÍTICA (depoimentos) ---------- */
+.s-press{padding:calc(var(--bar) + 11vh) 0 12vh;overflow:hidden}
+.press-row{display:flex;gap:clamp(16px,2vw,26px);overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 6px 26px;scrollbar-width:thin;scrollbar-color:var(--amber) transparent}
+.press-row::-webkit-scrollbar{height:4px}
+.press-row::-webkit-scrollbar-thumb{background:var(--amber)}
+.quote{flex:0 0 clamp(300px,38vw,520px);scroll-snap-align:start;border:1px solid var(--line);border-radius:4px;padding:clamp(24px,2.6vw,36px);background:var(--night-2);display:flex;flex-direction:column;gap:18px}
+.quote .stars{color:var(--amber);letter-spacing:.28em;font-size:.85rem}
+.quote p{font-family:"Fraunces",serif;font-weight:300;font-style:italic;font-size:clamp(1rem,1.35vw,1.2rem);line-height:1.5;color:var(--bone)}
+.quote footer{margin-top:auto;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.22em;color:var(--haze);text-transform:uppercase}
+.quote footer b{color:var(--amber);display:block;margin-bottom:5px}
+
+/* ---------- CENA 13 · ELENCO ---------- */
+.s-cast{padding:calc(var(--bar) + 11vh) 0 12vh;background:var(--night-2)}
+.cast{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.actor{background:var(--night-2);padding:clamp(22px,2.4vw,32px);transition:background .4s}
+.actor:hover{background:var(--night)}
+.actor .av{width:58px;height:58px;border-radius:50%;border:1px solid var(--amber);display:flex;align-items:center;justify-content:center;font-family:"Fraunces",serif;font-weight:800;color:var(--amber);font-size:1.05rem;margin-bottom:18px}
+.actor .role{font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:8px}
+.actor h3{font-family:"Fraunces",serif;font-weight:600;font-size:1.15rem;margin-bottom:10px}
+.actor p{color:var(--haze);font-size:.82rem;line-height:1.6}
+
+/* ---------- CENA 14 · NA PRÁTICA (FAQ) ---------- */
+.s-faq{padding:calc(var(--bar) + 11vh) 0 12vh}
+.faqs{max-width:860px;margin:0 auto}
+.faq{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:16px;padding:22px 0;font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1rem,1.5vw,1.25rem);color:var(--bone);transition:color .3s}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:hover{color:var(--amber)}
+.faq summary .pl{margin-left:auto;font-family:"Space Mono",monospace;color:var(--amber);font-weight:400;transition:transform .4s var(--ease)}
+.faq[open] summary .pl{transform:rotate(45deg)}
+.faq .ans{padding:0 0 24px;color:var(--haze);line-height:1.8;font-size:.94rem;max-width:780px}
+.faq .ans strong{color:var(--bone);font-weight:500}
+.faq .ans em{color:var(--amber-lt)}
+
+/* ---------- CENA 15 · A ALMA ---------- */
+.s-soul{padding:calc(var(--bar) + 13vh) 0 13vh;background:var(--night-2);overflow:hidden;position:relative}
+.soul-grid{display:grid;grid-template-columns:1fr .9fr;gap:clamp(30px,5vw,80px);align-items:start;position:relative;z-index:2}
+.soul-copy p{color:var(--haze);line-height:1.85;font-size:clamp(.95rem,1.2vw,1.08rem);margin-bottom:22px}
+.soul-copy b{color:var(--bone);font-weight:500}
+.soul-copy i{color:var(--amber-lt)}
+.yaz{font-family:"Noto Sans Tifinagh","Fraunces",serif;font-size:clamp(9rem,20vw,19rem);line-height:.9;color:rgba(242,169,59,.13);position:absolute;right:-2vw;top:6vh;z-index:1;user-select:none}
+.soul-stats{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line)}
+.sstat{background:var(--night-2);padding:24px 26px;display:flex;align-items:baseline;gap:18px}
+.sstat b{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(1.7rem,2.8vw,2.5rem);color:var(--amber);min-width:3.4em}
+.sstat span{color:var(--haze);font-size:.86rem;line-height:1.5}
+.soul-quote{margin-top:34px;font-family:"Fraunces",serif;font-style:italic;font-weight:300;font-size:clamp(1.15rem,1.8vw,1.5rem);color:var(--bone);line-height:1.5;border-left:2px solid var(--amber);padding-left:22px}
+
+/* ---------- CENA FINAL · RESERVA ---------- */
+.s-book{min-height:100svh;display:flex;align-items:center;overflow:hidden;padding:calc(var(--bar) + 10vh) 0 10vh}
+.s-book .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,8,15,.93),rgba(6,8,15,.68) 45%,rgba(6,8,15,.95))}
+.book-grid{position:relative;z-index:2;display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(34px,5vw,90px);align-items:center}
+.book-copy h2{font-family:"Fraunces",serif;font-weight:300;font-size:clamp(2.1rem,4.6vw,4.2rem);line-height:1.05}
+.book-copy h2 em{font-style:italic;color:var(--amber)}
+.book-copy .lead{margin-top:3vh}
+.book-points{margin-top:4vh;display:flex;flex-direction:column;gap:14px}
+.bpoint{display:flex;gap:14px;align-items:baseline;color:var(--haze);font-size:.9rem;line-height:1.55}
+.bpoint::before{content:"◆";color:var(--amber);font-size:.6rem}
+.bpoint b{color:var(--bone);font-weight:500}
+.form{background:rgba(10,15,28,.72);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:6px;padding:clamp(24px,2.8vw,40px)}
+.form .ftitle{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;margin-bottom:24px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.frow.one{grid-template-columns:1fr}
+.fld label{display:block;font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.24em;color:var(--haze);text-transform:uppercase;margin-bottom:8px}
+.fld input,.fld select,.fld textarea{width:100%;background:rgba(6,8,15,.6);border:1px solid var(--line);border-radius:2px;color:var(--bone);font-family:"Outfit",sans-serif;font-weight:300;font-size:.92rem;padding:13px 14px;transition:border-color .25s;appearance:none}
+.fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23F2A93B'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.fld textarea{min-height:86px;resize:vertical}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--amber)}
+.fld input::placeholder,.fld textarea::placeholder{color:rgba(237,228,211,.3)}
+.fsubmit{width:100%;margin-top:8px;font-family:"Space Mono",monospace;font-size:.7rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--night);background:var(--amber);padding:18px;border-radius:2px;transition:background .25s,transform .25s var(--ease)}
+.fsubmit:hover{background:var(--amber-lt);transform:translateY(-2px)}
+.fnote{margin-top:14px;text-align:center;font-family:"Space Mono",monospace;font-size:.54rem;letter-spacing:.16em;color:var(--haze-2);text-transform:uppercase;line-height:1.9}
+.fok{display:none;text-align:center;padding:30px 10px}
+.fok.on{display:block}
+.fok h3{font-family:"Fraunces",serif;font-weight:600;font-size:1.5rem;margin-bottom:12px}
+.fok p{color:var(--haze);line-height:1.7;font-size:.92rem}
+
+/* ---------- CRÉDITOS ---------- */
+.s-credits{padding:15vh 24px calc(var(--bar) + 10vh);background:#000;text-align:center}
+.credits-title{font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.5em;color:var(--haze-2);text-transform:uppercase;margin-bottom:8vh}
+.credit{margin:0 auto 4vh;max-width:620px}
+.credit .role{font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.4em;color:var(--haze-2);text-transform:uppercase;margin-bottom:9px}
+.credit .name{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.1rem,2vw,1.6rem);color:var(--bone)}
+.credit .name em{font-style:italic;color:var(--amber)}
+.credit .name a:hover{color:var(--amber)}
+.fin{margin-top:10vh;font-family:"Fraunces",serif;font-style:italic;font-weight:300;font-size:clamp(1.9rem,4.4vw,3.4rem);color:var(--amber)}
+.credits-foot{margin-top:8vh;font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.22em;color:var(--haze-2);text-transform:uppercase;line-height:2.3}
+.credits-foot a:hover{color:var(--amber)}
+
+/* ---------- CHAT YALLA ---------- */
+.fab{position:fixed;right:22px;bottom:calc(var(--bar) + 18px);z-index:140;display:flex;align-items:center;gap:10px;font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--night);background:var(--amber);padding:14px 20px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .3s var(--ease),background .25s}
+.fab:hover{transform:translateY(-3px);background:var(--amber-lt)}
+.chat{position:fixed;right:22px;bottom:calc(var(--bar) + 18px);z-index:150;width:min(380px,calc(100vw - 32px));height:min(540px,calc(100svh - var(--bar)*2 - 40px));background:var(--night-2);border:1px solid var(--line);border-radius:8px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.chat.open{display:flex}
+.chat header{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#000;border-bottom:1px solid var(--line)}
+.chat header .dot{width:9px;height:9px;border-radius:50%;background:#3BD07E}
+.chat header b{font-family:"Fraunces",serif;font-size:1.05rem}
+.chat header small{font-family:"Space Mono",monospace;font-size:.54rem;letter-spacing:.2em;color:var(--haze);text-transform:uppercase}
+.chat header button{margin-left:auto;color:var(--haze);font-size:1.1rem}
+.chat .body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:86%;padding:11px 14px;border-radius:6px;font-size:.86rem;line-height:1.55}
+.msg.bot{background:rgba(237,228,211,.06);border:1px solid var(--line);align-self:flex-start}
+.msg.user{background:var(--amber);color:var(--night);align-self:flex-end;font-weight:400}
+.msg.bot b{color:var(--amber-lt)}
+.chat .chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 12px}
+.chat .chip{font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.1em;color:var(--bone);border:1px solid var(--line);border-radius:999px;padding:7px 12px;transition:all .25s}
+.chat .chip:hover{border-color:var(--amber);color:var(--amber)}
+.chat form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.chat input{flex:1;background:rgba(6,8,15,.6);border:1px solid var(--line);border-radius:4px;color:var(--bone);font-family:"Outfit",sans-serif;font-size:.88rem;padding:12px}
+.chat input:focus{outline:none;border-color:var(--amber)}
+.chat form button{background:var(--amber);color:var(--night);border-radius:4px;width:46px;font-size:1rem}
+
+/* ---------- reveals base (GSAP assume) ---------- */
+.rv{opacity:0}
+.no-js .rv,.reduced .rv{opacity:1!important;transform:none!important}
+
+/* ---------- responsivo ---------- */
+@media(max-width:1080px){
+  .cast{grid-template-columns:repeat(2,1fr)}
+  .dishes{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:960px){
+  .takes,.exps,.facts,.peeks{grid-template-columns:repeat(2,1fr)}
+  .route-grid,.soul-grid,.book-grid{grid-template-columns:1fr}
+  .route-map{aspect-ratio:1/1}
+  .posters{grid-template-columns:1fr;max-width:480px;margin:0 auto}
+  .poster{aspect-ratio:3/4}
+  .board{grid-template-columns:1fr}
+  .board::before{left:4px}
+  .day,.day:nth-child(even){grid-column:1;text-align:left;padding:22px 0 22px 30px}
+  .day:nth-child(odd)::after,.day:nth-child(even)::after{left:0;right:auto}
+  .day .chips,.day:nth-child(even) .chips{justify-content:flex-start}
+  .yaz{opacity:.5}
+}
+@media(max-width:640px){
+  :root{--bar:44px}
+  .bar{padding:0 12px;font-size:.54rem}
+  .hide-m{display:none!important}
+  .h-title{font-size:13vw;letter-spacing:-.02em}
+  .takes,.exps,.facts,.peeks,.dishes,.cast{grid-template-columns:1fr}
+  .track{padding:0 6vw}
+  .frame{width:84vw}
+  .dsheet{grid-template-columns:1fr;max-height:calc(100svh - var(--bar)*2 - 20px)}
+  .dsheet .photo{min-height:220px}
+  .frow{grid-template-columns:1fr}
+  .fab{right:14px;bottom:calc(var(--bar) + 12px)}
+  .chat{right:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .cold{display:none}
+}
+
+/* ---------- FAB WhatsApp (harmônico com o letterbox) ---------- */
+.fab-wa{position:fixed;left:22px;bottom:calc(var(--bar) + 18px);z-index:140;display:flex;align-items:center;gap:10px;
+  font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--bone);background:rgba(10,15,28,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(242,169,59,.45);padding:13px 20px;border-radius:999px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .3s var(--ease),border-color .25s,color .25s}
+.fab-wa svg{color:var(--amber);transition:color .25s}
+.fab-wa:hover{transform:translateY(-3px);border-color:var(--amber);color:var(--amber)}
+@media(max-width:640px){.fab-wa{left:12px;bottom:calc(var(--bar) + 12px);padding:12px 14px}.fab-wa span{display:none}}
+
+/* ---------- rotas por pacote ---------- */
+.rt-pane{display:none}
+.rt-pane.on{display:block}
+.rt-pane .route-grid{align-items:start}
+.dl-map{display:inline-flex;align-items:center;gap:10px;margin-top:26px;
+  font-family:"Space Mono",monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--bone);
+  border:1px dashed rgba(242,169,59,.55);border-radius:2px;padding:14px 18px;transition:all .3s}
+.dl-map b{color:var(--amber);font-weight:700}
+.dl-map:hover{background:rgba(242,169,59,.1);border-style:solid}

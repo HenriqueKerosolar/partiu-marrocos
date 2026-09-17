@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      # Superuser de bootstrap da imagem — só para o script de init criar a
+      # role partiumarrocos_app (ver docker/postgres-init). App/migrations
+      # nunca usam este usuário.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_bootstrap_only
+      POSTGRES_DB: partiumarrocos
+    ports:
+      # Host 5434 -> container 5432: porta diferente da usada pelo CongáOne
+      # (5433) para os dois poderem rodar ao mesmo tempo em dev sem conflito.
+      - "5434:5432"
+    volumes:
+      - partiumarrocos_pg_data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d partiumarrocos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  partiumarrocos_pg_data:

@@ -1,0 +1,11 @@
+# PARTIU MARROCOS — bloqueia acesso HTTP direto a arquivos que nunca devem
+# ser servidos como estático (config com a senha real, pasta de rate limit,
+# backup do conteúdo). Padrão comum em hospedagem cPanel/Apache.
+<FilesMatch "^(config\.php|config\.example\.php|_lib\.php|data\.backup\.json)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^\.rl/ - [F,L]
+</IfModule>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel · Partiu Marrocos</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,300&family=Outfit:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--night:#06080F;--n2:#0A0F1C;--amber:#F2A93B;--amber-lt:#F8C972;--ember:#D24E1C;--bone:#EDE4D3;--haze:rgba(237,228,211,.55);--haze2:rgba(237,228,211,.26);--line:rgba(237,228,211,.12);--ok:#3BD07E}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--night);color:var(--bone);font-family:"Outfit",sans-serif;font-weight:300;min-height:100vh}
+::selection{background:var(--amber);color:var(--night)}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,textarea,select{width:100%;background:rgba(6,8,15,.7);border:1px solid var(--line);border-radius:3px;color:var(--bone);font-family:"Outfit",sans-serif;font-weight:300;font-size:.9rem;padding:10px 12px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--amber)}
+textarea{min-height:74px;resize:vertical}
+.mono{font-family:"Space Mono",monospace}
+h1,h2,h3{font-family:"Fraunces",serif}
+/* GATE */
+.gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--night);z-index:50}
+.gate .card{width:min(400px,92vw);border:1px solid var(--line);border-radius:8px;padding:38px;background:var(--n2)}
+.gate h1{font-weight:800;font-size:1.6rem;margin-bottom:6px}
+.gate h1 span{color:var(--amber)}
+.gate p{color:var(--haze);font-size:.85rem;margin-bottom:22px}
+.gate label{display:block;font-family:"Space Mono",monospace;font-size:.58rem;letter-spacing:.26em;color:var(--haze);text-transform:uppercase;margin-bottom:8px}
+.gate .err{color:var(--ember);font-size:.8rem;margin-top:10px;display:none}
+/* LAYOUT */
+.app{display:none;grid-template-columns:230px 1fr;min-height:100vh}
+.app.on{display:grid}
+aside{border-right:1px solid var(--line);background:#000;padding:22px 0;position:sticky;top:0;height:100vh;overflow:auto}
+aside .logo{font-family:"Space Mono",monospace;font-size:.7rem;font-weight:700;letter-spacing:.14em;padding:0 20px 18px;border-bottom:1px solid var(--line);margin-bottom:14px}
+aside .logo span{color:var(--amber)}
+aside nav button{display:block;width:100%;text-align:left;padding:10px 20px;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--haze);transition:all .2s;border-left:2px solid transparent}
+aside nav button:hover{color:var(--bone)}
+aside nav button.on{color:var(--amber);border-left-color:var(--amber);background:rgba(242,169,59,.06)}
+main{padding:26px clamp(18px,3vw,44px) 90px}
+.topbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:26px;position:sticky;top:0;background:linear-gradient(var(--night) 82%,transparent);padding:12px 0 16px;z-index:10}
+.btn{font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:12px 16px;border-radius:3px;transition:all .2s}
+.btn.gold{background:var(--amber);color:var(--night)}
+.btn.gold:hover{background:var(--amber-lt)}
+.btn.ghost{border:1px solid var(--line);color:var(--bone)}
+.btn.ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn.red{border:1px solid rgba(210,78,28,.5);color:var(--ember)}
+.btn.red:hover{background:rgba(210,78,28,.12)}
+.status{margin-left:auto;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.14em;color:var(--haze)}
+.status.ok{color:var(--ok)}
+.status.err{color:var(--ember)}
+/* SECTIONS */
+.sec{display:none;max-width:960px}
+.sec.on{display:block}
+.sec>h2{font-weight:800;font-size:1.5rem;margin-bottom:4px}
+.sec>h2 em{font-style:italic;font-weight:300;color:var(--amber)}
+.sec>.hint{color:var(--haze);font-size:.84rem;margin-bottom:24px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.fld{margin-bottom:14px}
+.fld>label{display:block;font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.22em;color:var(--haze);text-transform:uppercase;margin-bottom:7px}
+.fld .note{font-size:.72rem;color:var(--haze2);margin-top:5px}
+.chk{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--haze);padding:10px 0}
+.chk input{width:auto}
+/* IMG field */
+.imgfld{display:flex;gap:10px;align-items:flex-start}
+.imgfld input[type=text]{flex:1}
+.imgfld .thumb{width:74px;height:52px;object-fit:cover;border-radius:3px;border:1px solid var(--line);background:#000}
+.imgfld .up{white-space:nowrap}
+/* LISTS */
+.item{border:1px solid var(--line);border-radius:6px;background:var(--n2);margin-bottom:14px}
+.item>.head{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer}
+.item>.head .ttl{font-family:"Fraunces",serif;font-weight:600;font-size:1rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item>.head .idx{font-family:"Space Mono",monospace;font-size:.6rem;color:var(--amber);min-width:2em}
+.item>.head .mini{font-family:"Space Mono",monospace;font-size:.6rem;color:var(--haze);padding:6px 9px;border:1px solid var(--line);border-radius:3px}
+.item>.head .mini:hover{border-color:var(--amber);color:var(--amber)}
+.item>.head .mini.del:hover{border-color:var(--ember);color:var(--ember)}
+.item>.body{display:none;padding:16px;border-top:1px solid var(--line)}
+.item.open>.body{display:block}
+.subblock{border:1px dashed var(--line);border-radius:6px;padding:14px;margin-top:14px}
+.subblock>h4{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.24em;color:var(--amber);text-transform:uppercase;margin-bottom:12px}
+.addbtn{display:block;width:100%;border:1px dashed rgba(242,169,59,.45);color:var(--amber);border-radius:6px;padding:13px;font-family:"Space Mono",monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;transition:background .2s}
+.addbtn:hover{background:rgba(242,169,59,.08)}
+.preview-flag{position:fixed;right:16px;bottom:16px;background:var(--n2);border:1px solid var(--line);border-radius:6px;padding:12px 16px;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.14em;color:var(--haze);display:none;z-index:60}
+.preview-flag.on{display:block}
+.preview-flag b{color:var(--amber)}
+.preview-flag button{color:var(--ember);margin-left:10px;text-decoration:underline}
+@media(max-width:860px){
+  .app.on{grid-template-columns:1fr}
+  aside{position:static;height:auto;display:flex;overflow-x:auto;padding:10px}
+  aside .logo{display:none}
+  aside nav{display:flex}
+  aside nav button{white-space:nowrap;border-left:0;border-bottom:2px solid transparent}
+  aside nav button.on{border-bottom-color:var(--amber)}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="card">
+    <h1>Painel <span>Partiu Marrocos</span></h1>
+    <p>Área administrativa. Digite a senha para editar o site.</p>
+    <label>Senha</label>
+    <input type="password" id="gatePass" autocomplete="current-password">
+    <div class="err" id="gateErr">Senha incorreta.</div>
+    <button class="btn gold" id="gateGo" style="width:100%;margin-top:16px">Entrar</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <aside>
+    <div class="logo">PARTIU<span>MARROCOS</span> · ADMIN</div>
+    <nav id="nav"></nav>
+  </aside>
+  <main>
+    <div class="topbar">
+      <button class="btn gold" id="btnPreview">💾 Salvar rascunho + Preview</button>
+      <button class="btn ghost" id="btnPublish">🚀 Publicar no servidor</button>
+      <button class="btn ghost" id="btnDownload">⬇ Baixar data.json</button>
+      <button class="btn ghost" id="btnImport">⬆ Importar data.json</button>
+      <button class="btn red" id="btnReset">Restaurar padrão</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      <span class="status" id="status"></span>
+    </div>
+    <div id="secs"></div>
+  </main>
+</div>
+
+<div class="preview-flag" id="pflag"><b>PREVIEW ATIVO</b> — o site está exibindo seu rascunho.<button id="pflagOff">desativar</button></div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,2436 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ATIVO
+  INATIVO
+}
+
+enum LeadStatus {
+  ABERTO
+  GANHO
+  PERDIDO
+}
+
+enum ConversationChannel {
+  WHATSAPP
+  WEBCHAT
+  EMAIL
+  OUTRO
+}
+
+enum MessageDirection {
+  ENTRADA
+  SAIDA
+}
+
+enum MessageSenderType {
+  CONTATO
+  HUMANO
+  IA
+}
+
+// --- Attribution (T6) -------------------------------------------------------
+// Vocabulário pronto pra multi-touch (seção 1/7 da autorização de T6), mas
+// só CONVERSION é gravado nesta rodada — ver comentário do model
+// AttributionTouch abaixo pra justificativa completa.
+enum AttributionTouchType {
+  FIRST
+  LAST
+  CONVERSION
+}
+
+// --- CRM Evolution 01 (PM-NIGHT-RUN-01, Etapa 3) ----------------------------
+// Promove a categoria que já existia só como PREFIXO DE TEXTO em Note (T3,
+// ver notas.ts) pra uma coluna real — achado real de PM-CRM-FIN-ARCH-01
+// (matriz de convergência, classificação D: "Note.type — candidato de
+// generalização"). Notes antigas (humanas, sem categoria, ou geradas antes
+// desta rodada) ficam com `tipo: null` — nunca inventa uma categoria pra
+// dado histórico. STAGE_CHANGE/HANDOFF/REPESCAGEM cobrem os casos
+// gerados pelo próprio sistema (mover_stage, encaminhar_humano, Job de
+// repescagem) que antes só tinham o prefixo "[Yalla ...]" no texto.
+enum NoteTipo {
+  OBSERVACAO
+  INTERESSE
+  INTENCAO
+  PREFERENCIA
+  INFERENCIA
+  PENDENCIA
+  STAGE_CHANGE
+  HANDOFF
+  REPESCAGEM
+}
+
+// FOLLOWUP = follow-up/retorno agendado (tarefa.criar do Yalla, ou
+// repescagem estruturada); GERAL = qualquer outra tarefa manual. Conjunto
+// deliberadamente pequeno — "não implementar campo só pra completar lista"
+// (autorização §10) — só o suficiente pra diferenciar o que já tem uso real
+// (filtro/ícone na timeline do lead).
+enum TaskTipo {
+  FOLLOWUP
+  GERAL
+}
+
+// --- Gates/Approval (T1) ---------------------------------------------------
+enum GateStatus {
+  PENDENTE
+  APROVADO
+  REJEITADO
+  MODIFICADO
+  EXPIRADO
+}
+
+// Conjunto deliberadamente pequeno — cobre só os 7 conceitos exigidos pela
+// autorização de T1 (financial/commercial/external publication/advertising
+// need/data deletion/privileged action/irreversible action), não as ~19
+// categorias do Ai DEV Orquestrador (auditoria seção 5). Ver mapeamento no
+// README ao final da implementação.
+enum GateCategoria {
+  FINANCEIRO
+  COMERCIAL
+  PUBLICACAO_EXTERNA
+  ORCAMENTO_PUBLICIDADE
+  EXCLUSAO_DADO
+  ACAO_PRIVILEGIADA
+  ACAO_IRREVERSIVEL
+}
+
+enum ActorType {
+  HUMANO
+  AGENTE
+  SISTEMA
+}
+
+// --- Secret Provider (PM-BLOQ-001) ------------------------------------------
+// Conjunto fechado das finalidades hoje protegidas pelo SecretProvider — só
+// as que passaram no inventário de segredos como SECRET migrável nesta
+// rodada (ver relatório de fechamento). Não adicionar valor aqui para um
+// segredo que ainda não foi de fato migrado.
+enum SecretFinalidade {
+  AI_PROVIDER_API_KEY
+  WHATSAPP_ACCESS_TOKEN
+  WHATSAPP_APP_SECRET
+}
+
+// --- Cost Control (T2) ------------------------------------------------------
+// Porte adaptado do Ai DEV Orquestrador (Cost Controller/Budget Foundation) —
+// ver justificativas de cada desvio nos comentários dos models abaixo e no
+// relatório de fechamento de T2. Resumo dos desvios deliberados: Postgres
+// (não SQLite), tenantId real sob RLS (não project_id), Decimal (não REAL/
+// float) para todo valor monetário, e — diferença real de comportamento, não
+// só de storage — `UNKNOWN` é um resultado ALCANÇÁVEL de classificação (o Ai
+// DEV nunca produz isso sozinho a partir do caminho normal de gravação; aqui
+// preço parcialmente configurado também vira UNKNOWN, nunca 0 silencioso).
+enum CostKind {
+  ACTUAL
+  ESTIMATED
+  UNKNOWN
+  SUBSCRIPTION_USAGE
+  FREE_TIER_USAGE
+  ZERO_MARGINAL_COST
+}
+
+// Dimensão de uma política/limite de custo. TENANT = todo o tenant;
+// PROVIDER/MODEL/CAPABILITY/AGENT usam `escopoValor` para dizer qual (ex.:
+// escopo=PROVIDER, escopoValor="anthropic"). Conjunto fechado — só o que a
+// autorização de T2 pediu, não um sistema de dimensões arbitrárias.
+enum CostPolicyEscopo {
+  TENANT
+  PROVIDER
+  MODEL
+  CAPABILITY
+  AGENT
+}
+
+enum CostPolicyPeriodo {
+  POR_CHAMADA
+  DIARIO
+  MENSAL
+}
+
+// --- Tool Broker (T3) -------------------------------------------------------
+// Vocabulário de risco compatível com o desenho auditado do Ai DEV
+// Orquestrador — preservado mesmo sem usar os 2 últimos ainda: só
+// READ_ONLY/SAFE_WRITE têm tools reais nesta rodada (Camada 1/2).
+// PRIVILEGED_WRITE/EXTERNAL_SIDE_EFFECT/FINANCIAL ficam reservados pra uma
+// Camada 3 explicitamente FORA desta autorização — existem aqui só pra o
+// enum já nascer com o vocabulário certo, não como funcionalidade.
+enum ToolRisk {
+  READ_ONLY
+  SAFE_WRITE
+  PRIVILEGED_WRITE
+  EXTERNAL_SIDE_EFFECT
+  FINANCIAL
+}
+
+enum ToolCallStatus {
+  STARTED
+  COMPLETED
+  FAILED
+  TIMEOUT
+}
+
+// --- Job/Execution Engine (T5) ----------------------------------------------
+// Só os estados realmente necessários (não todos que o Ai DEV tem — ver
+// relatório de fechamento de T5). PENDING existe só pra dependência
+// (Job com dependsOnJobId ainda não satisfeita) — sem dependência, o Job já
+// nasce READY. RETRY_WAIT reaproveita `scheduledFor` como "pronto quando
+// chegar essa hora" — mesmo campo usado pra atraso inicial (ex.: follow-up
+// agendado) e pra backoff de retry, sem duplicar conceito.
+enum JobStatus {
+  PENDING
+  READY
+  RUNNING
+  BLOCKED
+  RETRY_WAIT
+  SUCCEEDED
+  FAILED
+  DEAD_LETTER
+  CANCELLED
+}
+
+enum ExecutionStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  TIMEOUT
+}
+
+// ---------------------------------------------------------------------------
+// Tenant Core — porte quase literal do CongáOne (packages/db/src/tenant-db.ts
+// + prisma/rls.sql), que por sua vez segue o padrão do MercadoEase (ADR-005):
+// RLS fail-closed via current_tenant_id()/rls_bypass(), uma única role de
+// aplicação (nunca troca de role Postgres), FORCE ROW LEVEL SECURITY em toda
+// tabela com tenant_id. Ver packages/db/prisma/rls.sql.
+//
+// FK composta (tenantId, id) em toda referência ENTRE tabelas tenant-scoped
+// (não só na coluna tenant_id da própria linha): achado real desta fundação
+// — o Postgres não aplica RLS da tabela referenciada ao validar uma FOREIGN
+// KEY, então "WITH CHECK (tenant_id = current_tenant_id())" sozinho não
+// impede, por exemplo, criar um Lead no tenant B apontando pipelineId de um
+// Pipeline do tenant A. Comprovado por teste negativo real (ver
+// tests/integration/tenant-isolation.test.ts) antes de existir aqui — as 3
+// primeiras tentativas desta fundação falharam exatamente assim, e foi por
+// isso que esse padrão foi adotado. A FK composta resolve isso no nível do
+// schema, independente de RLS/sessão — funciona mesmo para uma query manual
+// que esqueça de passar por withTenant.
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id                String   @id @default(uuid())
+  nome              String
+  slug              String   @unique
+  telefone          String?
+  email             String?
+  moeda             String   @default("BRL") // moeda-base do tenant; câmbio/i18n reais ficam para fase futura (ver DOCUMENTO-DE-FUNDACAO)
+  // Agente Yalla (resposta automática por IA). A chave em si NÃO fica nesta
+  // tabela (PM-BLOQ-001) — aiApiKeySecretRef é só uma referência opaca para
+  // uma linha de Secret (ver model Secret abaixo e
+  // packages/db/src/secret-provider.ts para o contrato completo). Nulo =
+  // IA desligada para o tenant (nunca chama nada sem config).
+  aiProvider        String?  @map("ai_provider") // "anthropic" | "openai"
+  aiApiKeySecretRef String?  @map("ai_api_key_secret_ref")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  memberships            Membership[]
+  roles                  Role[]
+  contacts               Contact[]
+  pipelines              Pipeline[]
+  stages                 Stage[]
+  leads                  Lead[]
+  conversations          Conversation[]
+  messages               Message[]
+  tasks                  Task[]
+  notes                  Note[]
+  auditLogs              AuditLog[]
+  sessions               Session[]
+  whatsappAccounts       WhatsappAccount[]
+  gates                  Gate[]
+  secrets                Secret[]
+  costEvents             CostEvent[]
+  costPolicies           CostPolicy[]
+  costUsages             CostUsage[]
+  costGateConsumos       CostGateConsumo[]
+  agentGrants            AgentGrant[]
+  toolCalls              ToolCall[]
+  jobs                   Job[]
+  executions             Execution[]
+  attributionTouches     AttributionTouch[]
+  proposals              Proposal[]
+  bookings               Booking[]
+  travelers              Traveler[]
+  payments               Payment[]
+  commissions            Commission[]
+  commercialPolicy       CommercialPolicy?
+  documentRequirements   DocumentRequirement[]
+  travelerDocuments      TravelerDocument[]
+  trips                  Trip[]
+  tripItineraryDays      TripItineraryDay[]
+  tripActivities         TripActivity[]
+  tripChecklistItems     TripChecklistItem[]
+  travelerCares          TravelerCare[]
+  professionals          Professional[]
+  suppliers              Supplier[]
+  tourVehicles           TourVehicle[]
+  tripGroups             TripGroup[]
+  tripGroupProfissionais TripGroupProfissional[]
+  tripActivityProgress   TripActivityProgress[]
+  travelerCheckins       TravelerCheckIn[]
+  partners               Partner[]
+  partnerReferrals       PartnerReferral[]
+  rewardCampaigns        RewardCampaign[]
+  rewardClaims           RewardClaim[]
+  supportTickets         SupportTicket[]
+  supportTicketMessages  SupportTicketMessage[]
+  trackingSessions       TrackingSession[]
+  geolocationPings       GeolocationPing[]
+  tripIncidents          TripIncident[]
+  notifications          Notification[]
+  tripReviews            TripReview[]
+
+  @@map("tenants")
+}
+
+// Identidade global de login. Não carrega tenantId — o vínculo com o(s)
+// tenant(s) é feito via Membership.
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  passwordHash       String     @map("password_hash")
+  mustChangePassword Boolean    @default(true) @map("must_change_password")
+  status             UserStatus @default(ATIVO)
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  memberships                    Membership[]
+  sessions                       Session[]
+  auditLogs                      AuditLog[]
+  leadsDono                      Lead[]                 @relation("LeadResponsavel")
+  tasks                          Task[]                 @relation("TaskResponsavel")
+  notes                          Note[]                 @relation("NoteAutor")
+  gatesSolicitados               Gate[]                 @relation("GateSolicitante")
+  gatesDecididos                 Gate[]                 @relation("GateDecisor")
+  propostasCriadas               Proposal[]             @relation("PropostaCriadoPor")
+  bookingsResponsavel            Booking[]              @relation("BookingResponsavel")
+  comissoesRecebidas             Commission[]           @relation("CommissionBeneficiario")
+  comissoesCriadas               Commission[]           @relation("CommissionCriadoPor")
+  politicasComerciaisAtualizadas CommercialPolicy[]     @relation("CommercialPolicyAtualizadoPor")
+  documentosRevisados            TravelerDocument[]     @relation("TravelerDocumentRevisadoPor")
+  tripsResponsavelOperacional    Trip[]                 @relation("TripResponsavelOperacional")
+  travelerCaresRegistradas       TravelerCare[]         @relation("TravelerCareRegistradoPor")
+  tripActivityProgressAtualizado TripActivityProgress[] @relation("TripActivityProgressAtualizadoPor")
+  checkinsRealizados             TravelerCheckIn[]      @relation("TravelerCheckInCheckinPor")
+  embarquesRealizados            TravelerCheckIn[]      @relation("TravelerCheckInEmbarquePor")
+  noShowsRegistrados             TravelerCheckIn[]      @relation("TravelerCheckInNoShowPor")
+  supportTicketsResponsavel      SupportTicket[]        @relation("SupportTicketResponsavel")
+  supportTicketMessagesAutor     SupportTicketMessage[] @relation("SupportTicketMessageAutor")
+  professional                   Professional?
+  trackingSessionsIniciadas      TrackingSession[]      @relation("TrackingSessionIniciadoPor")
+  trackingSessionsFinalizadas    TrackingSession[]      @relation("TrackingSessionFinalizadoPor")
+  notificacoes                   Notification[]
+  tripReviewsPublicadas          TripReview[]            @relation("TripReviewPublicadoPor")
+
+  @@map("users")
+}
+
+// Um usuário pertence a um tenant com um papel. Múltiplos tenants =>
+// múltiplos registros de Membership (mesmo padrão multiempresa do CongáOne).
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tenantId  String   @map("tenant_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // FK composta: garante que roleId pertence ao MESMO tenantId desta membership.
+  role   Role   @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@map("memberships")
+}
+
+// Papéis são configuráveis por tenant (cada empresa decide nomenclaturas),
+// mas todo tenant novo recebe um conjunto padrão via seed.
+model Role {
+  id        String  @id @default(uuid())
+  tenantId  String  @map("tenant_id")
+  nome      String
+  descricao String?
+  isDefault Boolean @default(false) @map("is_default")
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  memberships     Membership[]
+  rolePermissions RolePermission[]
+
+  @@unique([tenantId, nome])
+  @@unique([tenantId, id]) // alvo da FK composta de Membership.role
+  @@map("roles")
+}
+
+// Catálogo global de permissões (não é por tenant) — ver src/permissions.ts.
+model Permission {
+  id        String  @id @default(uuid())
+  chave     String  @unique
+  descricao String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+// Sem tenantId próprio — herda o tenant do Role. A policy RLS (ver rls.sql)
+// revalida isso via subquery em "roles", que por sua vez tem FORCE RLS — a
+// subquery dentro do WITH CHECK É filtrada normalmente pela RLS da tabela
+// referenciada (diferente de uma FK, que não é). Por isso RolePermission não
+// precisa de FK composta como as demais relações abaixo.
+model RolePermission {
+  id           String @id @default(uuid())
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// Registro server-side de sessões emitidas, para permitir revogação/logout e
+// rastreabilidade. Exceção deliberada ao isolamento por RLS (mesma decisão
+// do CongáOne): tenantId é nulo antes da seleção de empresa, então esta
+// tabela NÃO tem RLS habilitada — a proteção é estrutural, todo acesso é por
+// chave primária (id, uuid imprevisível vindo do cookie), nunca por listagem.
+model Session {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tenantId   String?   @map("tenant_id")
+  userAgent  String?   @map("user_agent")
+  ip         String?
+  criadoEm   DateTime  @default(now()) @map("criado_em")
+  expiraEm   DateTime  @map("expira_em")
+  revogadoEm DateTime? @map("revogado_em")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Log de auditoria — append-only garantido também em banco (trigger, ver
+// rls.sql), não só por convenção da aplicação (T1: acaba com a lacuna
+// apontada pela auditoria do Ai DEV — lá o append-only é comprovado, aqui é
+// o mesmo mecanismo). Único ponto de escrita: src/audit.ts::registrarEvento
+// (mesmo padrão "single writer" do Ai DEV, auditoria seção 19).
+//
+// actorType/actorLabel são ADAPTADOS/NOVOS nesta rodada (T1) — o campo
+// original (userId nulável) já existia desde a fundação, mas não distinguia
+// "ninguém logado" de "foi o agente Yalla" ou "foi o próprio sistema"
+// (ex.: expiração automática de um Gate). Nunca colocar secret/credencial em
+// `detalhe` — responsabilidade de quem chama registrarEvento, igual ao Ai DEV.
+model AuditLog {
+  id         String    @id @default(uuid())
+  tenantId   String    @map("tenant_id")
+  userId     String?   @map("user_id")
+  actorType  ActorType @default(HUMANO) @map("actor_type")
+  actorLabel String?   @map("actor_label") // ex.: "yalla" quando actorType=AGENTE; null quando HUMANO (usa userId) ou SISTEMA
+  acao       String
+  entidade   String?
+  entidadeId String?   @map("entidade_id")
+  resultado  String
+  detalhe    Json?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, entidade, entidadeId])
+  @@map("audit_logs")
+}
+
+// Gate/Approval — "a IA/sistema pode executar esta ação de risco?". Porte
+// adaptado do Ai DEV Orquestrador (HumanGate, auditoria seção 5, classificado
+// MADURO, 49/49 testes). Diferenças estruturais deliberadas do original:
+// (1) tenantId real sob RLS em vez de project_id/workspace_id — o Ai DEV é
+//     multi-tenant só por convenção de aplicação (auditoria seção 21); aqui
+//     usa o Tenant Core já testado com 38+ testes negativos, sem regredir.
+// (2) decisorId é FK REAL para User, não uma string livre tipo "human:X".
+//     Só existe linha em User pra quem faz login de verdade — não existe
+//     User "yalla" nem "system". Isso torna a autoaprovação por agente
+//     ESTRUTURALMENTE impossível (não só validada em código): não há valor
+//     de decisorId que um agente possa preencher e passar pela FK. É a
+//     mesma garantia que o CHECK `granted_by LIKE 'human:%'` do Ai DEV dá,
+//     só que via integridade referencial em vez de regex de string.
+// agentId/executionId/toolId ficam opcionais de propósito — T3 (Tool
+// Broker) e T5 (Job Engine) não existem ainda nesta rodada; não criar
+// acoplamento prematuro com módulos que ainda não foram autorizados.
+model Gate {
+  id                 String        @id @default(uuid())
+  tenantId           String        @map("tenant_id")
+  categoria          GateCategoria
+  status             GateStatus    @default(PENDENTE)
+  acaoProposta       String        @map("acao_proposta")
+  motivo             String
+  riscoDescricao     String?       @map("risco_descricao")
+  alternativas       Json?
+  solicitanteTipo    ActorType     @map("solicitante_tipo")
+  solicitanteLabel   String?       @map("solicitante_label") // ex.: "yalla" quando AGENTE
+  solicitanteId      String?       @map("solicitante_id") // FK User só quando solicitanteTipo=HUMANO
+  decisorId          String?       @map("decisor_id") // preenchido só na decisão; ver nota de estrutura acima
+  requestedAt        DateTime      @default(now()) @map("requested_at")
+  decidedAt          DateTime?     @map("decided_at")
+  expiresAt          DateTime      @map("expires_at")
+  resultado          Json?
+  metadata           Json?
+  agentId            String?       @map("agent_id")
+  executionId        String?       @map("execution_id")
+  toolId             String?       @map("tool_id")
+  // PM-CONV-04, Track C, §8C — fingerprint opcional do estado do "sujeito"
+  // (ex.: valor/moeda de uma Commission) no momento em que o Gate foi
+  // solicitado. Reaproveita a LÓGICA encontrada na auditoria da entrega
+  // Valter 0.4.11 (`Services.php::executeGate`, PM_CONV_02_INVENTARIO.md,
+  // Grupo 2 item 1) — não o código. Nulável e retrocompatível: Gates
+  // criados antes desta rodada (Booking/Payment/Commission de etapas
+  // anteriores) continuam funcionando sem fingerprint, sem migração de
+  // dado. Confirmado por auditoria: o mecanismo de Gate já existente NÃO
+  // detectava adulteração dos dados financeiros entre aprovação e
+  // execução — corrigido aqui, usado por `confirmarPagamentoComissaoAposGate`.
+  subjectFingerprint String?       @map("subject_fingerprint")
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  solicitante     User?            @relation("GateSolicitante", fields: [solicitanteId], references: [id], onDelete: SetNull)
+  decisor         User?            @relation("GateDecisor", fields: [decisorId], references: [id], onDelete: SetNull)
+  costGateConsumo CostGateConsumo?
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("gates")
+}
+
+// Secret Provider (PM-BLOQ-001) — armazenamento de segredos de tenant fora
+// das tabelas de domínio. Tenant/WhatsappAccount guardam só um secretRef
+// (o id desta tabela) — nunca o valor. Ver packages/db/src/secret-provider.ts
+// para o contrato SecretProvider completo e a justificativa de cada decisão
+// (por que envelope AES-256-GCM local, por que não cache, por que sem Gate
+// para rotação/remoção).
+//
+// Envelope da implementação LOCAL/DEV (LocalSecretProvider): ciphertext/iv/
+// authTag em base64 (AES-256-GCM, nonce de 96 bits, tag de autenticação
+// obrigatória). `keyId` identifica qual master key cifrou esta linha —
+// existe desde já para permitir uma futura rotação da master key sem
+// redesenhar o schema, mesmo que essa rotação em si não seja implementada
+// nesta rodada (fora do que a autorização pediu). Um provider de PRODUÇÃO
+// (AWS Secrets Manager/KMS, Google Secret Manager, Azure Key Vault, Vault,
+// etc.) implementaria o mesmo contrato SecretProvider sem usar esta tabela
+// — armazenaria só uma referência externa (ex.: ARN) como secretRef; esta
+// tabela é exclusiva da implementação local.
+model Secret {
+  id         String           @id @default(uuid())
+  tenantId   String           @map("tenant_id")
+  finalidade SecretFinalidade
+  ciphertext String
+  iv         String
+  authTag    String           @map("auth_tag")
+  algoritmo  String           @default("aes-256-gcm")
+  versao     Int              @default(1)
+  keyId      String           @map("key_id")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, finalidade])
+  @@map("secrets")
+}
+
+// Cost Control (T2) — ledger append-only de custo técnico/IA. Adaptado do
+// `api_calls`/`cost_ledger_events` do Ai DEV Orquestrador (auditoria +
+// pesquisa desta rodada), com 3 desvios deliberados:
+// (1) `tenantId` real sob RLS (o Ai DEV usa `project_id`, multi-tenant só
+//     por convenção de aplicação — nunca uma coluna obrigatória em todo
+//     projeto; `workspace_id` lá é opcional/nullable).
+// (2) `custoUnitario`/`custoTotal` são `Decimal`, não `REAL`/float — o Ai
+//     DEV usa ponto flutuante SQLite em toda coluna monetária, exposição
+//     real de erro de arredondamento acumulado que não faz sentido repetir.
+// (3) `idempotencyKey` existe AQUI (opcional, único por tenant) — o Ai DEV
+//     decidiu deliberadamente NÃO deduplicar no evento de custo (cada
+//     tentativa de retry vira seu próprio evento, encadeado por retryOf,
+//     porque descartar uma tentativa que já queimou tokens reais SUBESTIMA
+//     o gasto real). Aqui a autorização pediu idempotência explícita no
+//     próprio evento — mantém o espírito ("nunca perder um custo real") via
+//     `costKind`/`custoTotal` nulável em vez de acumular tentativas.
+// `custoTotal`/`custoUnitario` NULOS (não zero) representam custo
+// genuinamente desconhecido — nunca inventar 0 (ver `costKind: UNKNOWN`,
+// packages/db/src/cost-control.ts::calcularCusto). Nunca guardar prompt/
+// resposta completos nem qualquer segredo em `metadata` — responsabilidade
+// de quem chama, igual ao AuditLog.
+model CostEvent {
+  id             String   @id @default(uuid())
+  tenantId       String   @map("tenant_id")
+  provider       String
+  model          String?
+  capability     String?
+  agent          String?
+  operation      String
+  inputTokens    Int?     @map("input_tokens")
+  outputTokens   Int?     @map("output_tokens")
+  cachedTokens   Int?     @map("cached_tokens")
+  unidade        String?
+  quantidade     Decimal? @db.Decimal(20, 6)
+  moeda          String   @default("USD")
+  custoUnitario  Decimal? @map("custo_unitario") @db.Decimal(20, 10)
+  custoTotal     Decimal? @map("custo_total") @db.Decimal(20, 10)
+  costKind       CostKind @map("cost_kind")
+  source         String
+  idempotencyKey String?  @map("idempotency_key")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, provider])
+  @@map("cost_events")
+}
+
+// Política/limite de custo, tenant-scoped. `escopoValor` é "" para
+// escopo=TENANT (sentinela, não NULL — Postgres trata NULL como distinto em
+// índice único, o que quebraria a constraint de não duplicar política do
+// mesmo escopo/período). Só Administrador edita por padrão (RBAC, ver
+// cost.manage em permissions.ts).
+model CostPolicy {
+  id               String            @id @default(uuid())
+  tenantId         String            @map("tenant_id")
+  escopo           CostPolicyEscopo
+  escopoValor      String            @default("") @map("escopo_valor")
+  periodo          CostPolicyPeriodo
+  limite           Decimal           @db.Decimal(20, 10)
+  moeda            String            @default("USD")
+  alertaPercentual Decimal           @default(80) @map("alerta_percentual") @db.Decimal(5, 2)
+  ativo            Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, escopo, escopoValor, periodo])
+  @@index([tenantId])
+  @@map("cost_policies")
+}
+
+// Acumulador atômico por (escopo, período, janela) — existe SÓ para escopos
+// que têm uma CostPolicy ativa (não é um rollup genérico de analytics; a UI
+// de "consumo atual" sem política associada soma CostEvent diretamente, ver
+// cost-control.ts::obterConsumoAtual). `periodoChave` é "AAAA-MM-DD"
+// (DIARIO) ou "AAAA-MM" (MENSAL) — POR_CHAMADA nunca gera linha aqui (não é
+// cumulativo, checa o custo da própria chamada contra o limite). Atualizado
+// via `INSERT ... ON CONFLICT ... DO UPDATE ... RETURNING` (mesmo padrão
+// atômico que o Ai DEV comprovou para call-count budget — aplicado aqui
+// também a VALOR monetário, fechando a lacuna que a pesquisa desta rodada
+// encontrou: lá, dois estouros concorrentes de custo podiam passar os dois
+// porque só o call-count tinha reserva atômica).
+model CostUsage {
+  id           String            @id @default(uuid())
+  tenantId     String            @map("tenant_id")
+  escopo       CostPolicyEscopo
+  escopoValor  String            @default("") @map("escopo_valor")
+  periodo      CostPolicyPeriodo
+  periodoChave String            @map("periodo_chave")
+  moeda        String
+  acumulado    Decimal           @default(0) @db.Decimal(20, 10)
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, escopo, escopoValor, periodo, periodoChave, moeda])
+  @@index([tenantId])
+  @@map("cost_usages")
+}
+
+// Catálogo de preços — GLOBAL, sem tenantId/RLS (mesmo padrão de
+// `permissions`: é preço de mercado do provider, não configuração de
+// tenant). Adaptado do `cost_catalog_entries` do Ai DEV: mudança de preço =
+// NOVA linha (versionado por `vigenteDesde`), nunca UPDATE de preço
+// existente. `versao` é um rótulo livre para rastreabilidade/homologação —
+// esta rodada NÃO popula preços de produção (não pesquisou/chamou API
+// externa de preços, conforme a autorização pediu); toda chamada real fica
+// `costKind: UNKNOWN` até um preço ser cadastrado com fonte homologada.
+// Convenção: preços são "por 1 token individual" (não por 1K/1M) — ao
+// cadastrar um preço real anunciado como "US$X por 1M tokens", dividir por
+// 1_000_000 antes de salvar aqui.
+model ModelPrice {
+  id           String   @id @default(uuid())
+  provider     String
+  model        String?
+  capability   String?
+  moeda        String   @default("USD")
+  unidade      String   @default("token")
+  precoEntrada Decimal? @map("preco_entrada") @db.Decimal(20, 10)
+  precoSaida   Decimal? @map("preco_saida") @db.Decimal(20, 10)
+  precoUnico   Decimal? @map("preco_unico") @db.Decimal(20, 10)
+  versao       String
+  vigenteDesde DateTime @map("vigente_desde")
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  @@index([provider, model, capability])
+  @@map("model_prices")
+}
+
+// Prova de consumo único de uma autorização de Gate de custo — existe SÓ
+// para fechar o requisito "aprovar não pode virar loop infinito nem ser
+// reaproveitado indefinidamente" (ver cost-control.ts, seção "Gate" do
+// relatório de fechamento de T2). Um Gate de custo aprovado autoriza
+// EXATAMENTE uma operação subsequente: consumir é um
+// `INSERT ... ON CONFLICT (tenantId, gateId) DO NOTHING RETURNING id` — se
+// não devolver linha, a autorização já foi usada, e uma nova operação acima
+// do limite precisa de um Gate novo (uma nova decisão humana), não reabre
+// o mesmo. Não reaproveita nenhum campo do Gate em si — T1 não foi alterado
+// estruturalmente, só referenciado via FK composta.
+model CostGateConsumo {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  gateId      String   @map("gate_id")
+  consumidoEm DateTime @default(now()) @map("consumido_em")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  gate   Gate   @relation(fields: [tenantId, gateId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, gateId])
+  @@map("cost_gate_consumos")
+}
+
+// Tool Broker (T3) — default-deny explícito. Nenhuma tool é permitida só
+// porque existe no registry (código, não banco — ver
+// packages/db/src/tools/registry.ts): precisa de uma linha ativa aqui pra
+// (tenantId, agent, capability). Nunca "*"/admin/all — sempre a capability
+// exata da tool. `agent` é uma string livre ("yalla") de propósito — não FK
+// pra User, porque agentes não são usuários (mesma razão do
+// solicitanteLabel do Gate em T1).
+model AgentGrant {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  agent      String
+  capability String
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, agent, capability])
+  @@index([tenantId])
+  @@map("agent_grants")
+}
+
+// Log de execução de tool — dupla função: (1) idempotência real via
+// UNIQUE(tenantId, toolCallId) — o mesmo toolCallId (do protocolo de tool
+// calling do provider, ou gerado) nunca executa o side effect duas vezes,
+// mesmo em replay; (2) correlação para o Audit Log de T1 (que grava os
+// eventos de governança TOOL_REQUESTED/ALLOWED/DENIED/... via
+// registrarEvento — esta tabela NÃO duplica isso, é o estado mecânico da
+// execução em si, não o trilho de auditoria). `targetType`/`targetId` são
+// strings informativas, sem FK real — uma tool pode afetar Lead, Note,
+// Task, etc., e nenhuma FK única cobre todos (mesmo padrão do
+// agentId/executionId/toolId opcionais do Gate em T1). `resultado` é um
+// resumo seguro (nunca payload bruto/prompt completo — responsabilidade de
+// quem grava, igual a todo outro Json? deste projeto).
+model ToolCall {
+  id         String         @id @default(uuid())
+  tenantId   String         @map("tenant_id")
+  toolCallId String         @map("tool_call_id")
+  toolId     String         @map("tool_id")
+  agent      String
+  risk       ToolRisk
+  status     ToolCallStatus
+  targetType String?        @map("target_type")
+  targetId   String?        @map("target_id")
+  resultado  Json?
+  erro       String?
+  duracaoMs  Int?           @map("duracao_ms")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, toolCallId])
+  @@index([tenantId])
+  @@index([tenantId, toolId])
+  @@map("tool_calls")
+}
+
+// Job/Execution Engine (T5) — motor genérico e reutilizável, não específico
+// do Partiu (T5 §1). `Job` = trabalho lógico solicitado; `Execution` = uma
+// tentativa concreta (um Job pode ter várias Execution por retry — T5 §5).
+//
+// `type` é validado contra o Job Registry (código, não banco — mesmo motivo
+// do Tool Registry em T3: handler é função, não serializa em coluna); tipo
+// desconhecido nunca executa (default-deny, mesmo espírito de T3 §7/§8).
+//
+// `dependsOnJobId` é uma dependência ÚNICA (não DAG completo — T5 §17 pediu
+// só implementar dependência se realmente necessária; um ponteiro simples
+// já cobre "B não roda antes de A"). `gateId`/`blockedReason`/`resumeState`
+// espelham blocked/resume do Gate de T1 (mesmo padrão de
+// `Gate.solicitanteLabel`/T2 `CostGateConsumo` — reaproveita a
+// infraestrutura existente, nunca um segundo sistema de aprovação, T5 §19).
+// `leaseOwner`/`leaseExpiresAt` são a lease do RUNNING atual — nunca fica
+// RUNNING pra sempre se o worker morrer (T5 §10, recuperado por sweep
+// preguiçoso, mesmo padrão de `expirarSeVencido` do Gate em T1).
+model Job {
+  id             String     @id @default(uuid())
+  tenantId       String     @map("tenant_id")
+  type           String
+  payload        Json
+  status         JobStatus  @default(READY)
+  priority       Int        @default(0)
+  attempts       Int        @default(0)
+  maxAttempts    Int        @default(5) @map("max_attempts")
+  idempotencyKey String?    @map("idempotency_key")
+  scheduledFor   DateTime   @default(now()) @map("scheduled_for")
+  dependsOnJobId String?    @map("depends_on_job_id")
+  gateId         String?    @map("gate_id")
+  blockedReason  String?    @map("blocked_reason")
+  resumeState    JobStatus? @map("resume_state")
+  leaseOwner     String?    @map("lease_owner")
+  leaseExpiresAt DateTime?  @map("lease_expires_at")
+  lastError      String?    @map("last_error")
+  source         String
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  dependsOn  Job?        @relation("JobDependency", fields: [tenantId, dependsOnJobId], references: [tenantId, id], onDelete: SetNull)
+  dependents Job[]       @relation("JobDependency")
+  executions Execution[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([status, scheduledFor])
+  @@index([tenantId, type])
+  @@map("jobs")
+}
+
+// Histórico de tentativas — imutável DEPOIS de terminal (SUCCEEDED/FAILED/
+// TIMEOUT); enquanto RUNNING, só heartbeat/lease mudam (T5 §33: "não
+// sobrescrever tentativa 1 quando ocorrer tentativa 2" — cada retry é uma
+// linha NOVA, nunca reaproveita a anterior).
+model Execution {
+  id             String          @id @default(uuid())
+  tenantId       String          @map("tenant_id")
+  jobId          String          @map("job_id")
+  attemptNumber  Int             @map("attempt_number")
+  status         ExecutionStatus
+  workerId       String          @map("worker_id")
+  leaseExpiresAt DateTime        @map("lease_expires_at")
+  heartbeatAt    DateTime        @default(now()) @map("heartbeat_at")
+  startedAt      DateTime        @default(now()) @map("started_at")
+  finishedAt     DateTime?       @map("finished_at")
+  error          String?
+  resultado      Json?
+  duracaoMs      Int?            @map("duracao_ms")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  job    Job    @relation(fields: [tenantId, jobId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, jobId])
+  @@map("executions")
+}
+
+// Worker health (T5-FIX §2) — catálogo GLOBAL, sem tenantId/RLS (mesmo
+// tratamento de ModelPrice em T2: worker é infraestrutura, não dado de
+// tenant). Cada processo worker (packages/db/src/scripts ou
+// apps/web/src/scripts/job-worker.ts) grava/atualiza sua própria linha
+// periodicamente. "Worker ativo" é derivado na leitura (lastHeartbeatAt
+// recente o bastante — ver WORKER_HEARTBEAT_STALE_MS em engine.ts), não
+// armazenado como booleano (evitaria ficar desatualizado sozinho).
+model WorkerHeartbeat {
+  workerId        String   @id @map("worker_id")
+  startedAt       DateTime @map("started_at")
+  lastHeartbeatAt DateTime @map("last_heartbeat_at")
+  jobsProcessados Int      @default(0) @map("jobs_processados")
+
+  @@map("worker_heartbeats")
+}
+
+// ---------------------------------------------------------------------------
+// CRM — domínio novo do Partiu Marrocos. Inspirado na forma do schema do
+// KeroSolar CRM (Lead/Pipeline/Stage/Conversation/Message), mas com tenantId
+// em toda tabela desde a criação — o KeroSolar CRM não tem isolamento
+// multi-tenant hoje; esta é a principal lacuna que esta fundação resolve.
+// ---------------------------------------------------------------------------
+
+// Pessoa de contato (viajante/lead). Não confundir com User — Contact nunca
+// loga no sistema, é quem a empresa atende.
+model Contact {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  nome       String
+  telefone   String?
+  email      String?
+  whatsappId String?  @map("whatsapp_id") // telefone normalizado (só dígitos, com DDI) — chave de dedup do canal WhatsApp
+  origem     String? // canal/campanha de onde veio (ex.: "instagram", "site")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads              Lead[]
+  conversations      Conversation[]
+  notes              Note[]
+  attributionTouches AttributionTouch[]
+
+  @@unique([tenantId, id]) // alvo de FK composta (Lead.contact, Conversation.contact, Note.contact)
+  @@unique([tenantId, whatsappId])
+  @@index([tenantId])
+  @@map("contacts")
+}
+
+model Pipeline {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  nome      String
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stages Stage[]
+  leads  Lead[]
+
+  @@unique([tenantId, id]) // alvo de FK composta (Stage.pipeline, Lead.pipeline)
+  @@index([tenantId])
+  @@map("pipelines")
+}
+
+model Stage {
+  id         String  @id @default(uuid())
+  tenantId   String  @map("tenant_id")
+  pipelineId String  @map("pipeline_id")
+  nome       String
+  ordem      Int     @default(0)
+  isWon      Boolean @default(false) @map("is_won") // etapa terminal de sucesso (forma reaproveitada do KeroSolar CRM, auditoria seção 3)
+  isLost     Boolean @default(false) @map("is_lost") // etapa terminal de perda
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pipeline Pipeline @relation(fields: [tenantId, pipelineId], references: [tenantId, id], onDelete: Cascade)
+  leads    Lead[]
+
+  @@unique([tenantId, id]) // alvo de FK composta (Lead.stage)
+  @@index([tenantId, pipelineId])
+  @@map("stages")
+}
+
+// Card central do funil comercial.
+model Lead {
+  id                  String     @id @default(uuid())
+  tenantId            String     @map("tenant_id")
+  contactId           String     @map("contact_id")
+  pipelineId          String     @map("pipeline_id")
+  stageId             String     @map("stage_id")
+  responsavelId       String?    @map("responsavel_id")
+  status              LeadStatus @default(ABERTO)
+  valor               Float?
+  moeda               String? // moeda do valor da proposta — pode divergir de tenant.moeda (mercado internacional)
+  origem              String?
+  // Dados de viagem declarados pelo cliente (T3, tool lead.atualizar_preferencias)
+  // — JSON estruturado E validado por zod antes de gravar (não é
+  // mass-assignment livre; ver packages/db/src/tools/definitions/lead.ts),
+  // campos: datasDesejadas/quantidadePassageiros/preferenciaRoteiro/
+  // orcamentoInformado/idioma/observacoes. Nulo = nada informado ainda.
+  preferenciasCliente Json?      @map("preferencias_cliente")
+  // CRM Evolution 01 — melhorias de baixo risco (autorização §10/§20):
+  // flag simples (não score/enum — mesmo padrão minimalista do
+  // `highPriority` do KeroSolar, achado da matriz de convergência).
+  prioridade          Boolean    @default(false)
+  // Preenchido só quando o lead é movido pra uma etapa isLost (ação humana
+  // — a tool lead.mover_stage do Yalla NUNCA alcança etapa terminal, então
+  // nunca preenche isto). Texto livre — taxonomia estruturada de motivo é
+  // decisão comercial futura, não inventada aqui.
+  motivoPerda         String?    @map("motivo_perda")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact            Contact            @relation(fields: [tenantId, contactId], references: [tenantId, id], onDelete: Cascade)
+  pipeline           Pipeline           @relation(fields: [tenantId, pipelineId], references: [tenantId, id], onDelete: Cascade)
+  stage              Stage              @relation(fields: [tenantId, stageId], references: [tenantId, id], onDelete: Restrict)
+  responsavel        User?              @relation("LeadResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+  tasks              Task[]
+  notes              Note[]
+  attributionTouches AttributionTouch[]
+  proposals          Proposal[]
+  bookings           Booking[]
+  partnerReferral    PartnerReferral?
+  supportTickets     SupportTicket[]
+
+  @@unique([tenantId, id]) // alvo de FK composta (Task.lead, Note.lead, AttributionTouch.lead, Proposal.lead, Booking.lead)
+  @@index([tenantId])
+  @@index([tenantId, stageId])
+  @@map("leads")
+}
+
+// Conversa omnichannel com um contato (WhatsApp, webchat, etc.).
+model Conversation {
+  id            String              @id @default(uuid())
+  tenantId      String              @map("tenant_id")
+  contactId     String              @map("contact_id")
+  accountId     String?             @map("account_id") // conta WhatsApp usada (nulo para webchat/email/simulador)
+  channel       ConversationChannel
+  externalId    String?             @map("external_id") // id da conversa no canal externo (ex.: WhatsApp)
+  aiEnabled     Boolean             @default(true) @map("ai_enabled")
+  resolvedAt    DateTime?           @map("resolved_at") // reabre automaticamente quando o contato escreve de novo (ver ingest)
+  lastMessageAt DateTime?           @map("last_message_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact               Contact                @relation(fields: [tenantId, contactId], references: [tenantId, id], onDelete: Cascade)
+  account               WhatsappAccount?       @relation(fields: [tenantId, accountId], references: [tenantId, id], onDelete: SetNull)
+  messages              Message[]
+  supportTicketMessages SupportTicketMessage[]
+
+  // Mesma decisão do KeroSolar CRM (auditoria seção 6): 1 conversa por canal por contato.
+  @@unique([tenantId, channel, contactId])
+  @@unique([tenantId, id]) // alvo de FK composta (Message.conversation)
+  @@index([tenantId])
+  @@index([tenantId, contactId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String            @id @default(uuid())
+  tenantId       String            @map("tenant_id")
+  conversationId String            @map("conversation_id")
+  direction      MessageDirection
+  senderType     MessageSenderType @map("sender_type")
+  conteudo       String
+  externalId     String?           @map("external_id") // message id do canal (ex.: WhatsApp) — chave de dedup/status
+  mediaUrl       String?           @map("media_url")
+  mediaType      String?           @map("media_type")
+  deliveredAt    DateTime?         @map("delivered_at")
+  readAt         DateTime?         @map("read_at")
+  failedReason   String?           @map("failed_reason")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [tenantId, conversationId], references: [tenantId, id], onDelete: Cascade)
+
+  // Dedup real de webhook reentregue (achado da auditoria KeroSolar seção 4: lá é só
+  // findFirst+create, sem constraint — aqui a unicidade é garantida pelo próprio banco).
+  @@unique([tenantId, externalId])
+  @@index([tenantId])
+  @@index([tenantId, conversationId])
+  @@map("messages")
+}
+
+// Conta WhatsApp Cloud API (Meta oficial) de um tenant. phoneNumberId é atribuído
+// pela Meta e é globalmente único — por isso o webhook (que ainda não sabe o
+// tenant) resolve a conta via busca cross-tenant (ver cross-tenant.ts) antes de
+// entrar no contexto withTenant.
+model WhatsappAccount {
+  id                   String    @id @default(uuid())
+  tenantId             String    @map("tenant_id")
+  label                String
+  phoneNumberId        String    @unique @map("phone_number_id")
+  wabaId               String?   @map("waba_id")
+  displayPhone         String?   @map("display_phone")
+  // Token/segredos NÃO ficam mais em texto plano nesta tabela (PM-BLOQ-001)
+  // — accessTokenSecretRef/appSecretSecretRef são referências opacas para
+  // linhas de Secret (ver model Secret abaixo). verifyToken continua em
+  // texto plano DE PROPÓSITO: cross-tenant.ts::findWhatsappAccountByVerifyToken
+  // faz uma busca por igualdade nele durante o handshake GET do webhook da
+  // Meta, que acontece ANTES de qualquer tenant ser conhecido — não dá para
+  // mover isso para o envelope cifrado do SecretProvider sem quebrar esse
+  // handshake. Por isso verifyToken é classificado como TOKEN DE VERIFICAÇÃO,
+  // categoria distinta de SECRET (ver inventário no relatório de fechamento).
+  accessTokenSecretRef String    @map("access_token_secret_ref")
+  appSecretSecretRef   String?   @map("app_secret_secret_ref")
+  verifyToken          String    @map("verify_token")
+  connectedAt          DateTime? @map("connected_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@unique([tenantId, id]) // alvo de FK composta (Conversation.account)
+  @@index([tenantId])
+  @@map("whatsapp_accounts")
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  leadId        String?   @map("lead_id")
+  responsavelId String?   @map("responsavel_id")
+  titulo        String
+  tipo          TaskTipo  @default(GERAL)
+  vencimento    DateTime?
+  concluida     Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead        Lead?  @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: Cascade)
+  responsavel User?  @relation("TaskResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@map("tasks")
+}
+
+model Note {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  leadId    String?   @map("lead_id")
+  contactId String?   @map("contact_id")
+  autorId   String?   @map("autor_id")
+  tipo      NoteTipo?
+  conteudo  String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead    Lead?    @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: Cascade)
+  contact Contact? @relation(fields: [tenantId, contactId], references: [tenantId, id], onDelete: Cascade)
+  autor   User?    @relation("NoteAutor", fields: [autorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@map("notes")
+}
+
+// Attribution (T6) — de onde um lead realmente veio, em formato consultável
+// (colunas indexadas, não Json solto — a autorização pediu explicitamente
+// suporte a "leads por source/campaign", "vendas por campaign", "CAC",
+// "ROAS" no futuro; nenhuma dessas consultas é viável eficientemente sobre
+// um blob). `tipo` já modela FIRST/LAST/CONVERSION (multi-touch) mas esta
+// rodada só GRAVA `CONVERSION` — capturar FIRST/LAST de verdade exigiria um
+// mecanismo de visitante/sessão persistente no site público (cookie/
+// localStorage sobrevivendo a múltiplas visitas), que não existe ainda e
+// não foi construído aqui (fora do escopo desta rodada: "preparar
+// posteriormente" no comando, não "implementar agora"). O enum já nasce
+// certo pra quando isso for construído, sem precisar de migration nova.
+// `leadId` nulável de propósito: o touch é gravado no exato momento da
+// conversão (POST /api/public/leads), sempre com contactId; leadId é
+// preenchido junto pois hoje um touch sempre gera um Lead nesse fluxo, mas
+// a coluna fica nulável para não impedir um touch futuro que ainda não
+// converteu (ex.: quando FIRST touch for capturado antes da conversão).
+model AttributionTouch {
+  id          String               @id @default(uuid())
+  tenantId    String               @map("tenant_id")
+  contactId   String               @map("contact_id")
+  leadId      String?              @map("lead_id")
+  tipo        AttributionTouchType @default(CONVERSION)
+  source      String?              @map("utm_source") // ex.: "google", "instagram"
+  medium      String?              @map("utm_medium") // ex.: "cpc", "social", "organic"
+  campaign    String?              @map("utm_campaign")
+  content     String?              @map("utm_content")
+  term        String?              @map("utm_term")
+  gclid       String?
+  fbclid      String?
+  landingPage String?              @map("landing_page") // URL da página no momento da conversão — sem sessão persistente, é sempre a página atual, não necessariamente a 1ª visita real
+  referrer    String?
+  capturedAt  DateTime             @default(now()) @map("captured_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [tenantId, contactId], references: [tenantId, id], onDelete: Cascade)
+  lead    Lead?   @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, source])
+  @@index([tenantId, campaign])
+  @@index([tenantId, contactId])
+  @@index([tenantId, leadId])
+  @@map("attribution_touches")
+}
+
+// Proposal Foundation 01 (PM-NIGHT-RUN-01, Etapa 5) — motor de proposta
+// comercial. Versionamento obrigatório (seção 33 da autorização: "nunca
+// sobrescrever silenciosamente uma proposta já enviada"): uma proposta em
+// RASCUNHO pode ser editada in-place; a partir do momento em que vira
+// ENVIADA (ou está AGUARDANDO_APROVACAO), qualquer alteração cria uma NOVA
+// linha (`versao` incrementada, `substituiPropostaId` apontando pra
+// anterior), e a linha anterior vira SUBSTITUIDA — nunca é reescrita. Preço
+// enviado ao cliente preserva valor/moeda/validade/cotação (quando houver)
+// porque a linha inteira nunca muda depois de ENVIADA.
+enum PropostaStatus {
+  RASCUNHO
+  AGUARDANDO_APROVACAO // Gate COMERCIAL pendente — ver gateId
+  ENVIADA
+  ACEITA
+  RECUSADA
+  EXPIRADA
+  SUBSTITUIDA // uma nova versão foi criada a partir desta
+}
+
+model Proposal {
+  id                  String         @id @default(uuid())
+  tenantId            String         @map("tenant_id")
+  leadId              String         @map("lead_id")
+  versao              Int            @default(1)
+  substituiPropostaId String?        @map("substitui_proposta_id")
+  status              PropostaStatus @default(RASCUNHO)
+
+  // Conteúdo comercial — texto/JSON livre de propósito (motor de roteiro/
+  // catálogo de serviços estruturado é trabalho futuro, fora desta
+  // fundação; aqui só precisa existir e ser versionado corretamente).
+  roteiro               String?
+  datasViagem           Json?   @map("datas_viagem")
+  quantidadePassageiros Int?    @map("quantidade_passageiros")
+  servicosIncluidos     Json?   @map("servicos_incluidos") // string[]
+  servicosExcluidos     Json?   @map("servicos_excluidos") // string[]
+
+  moeda           String
+  preco           Float
+  precoReferencia Float?   @map("preco_referencia") // "preço de tabela"/anterior para medir desconto — nunca inventado se não informado
+  custos          Float?
+  condicoes       String?
+  validade        DateTime // "válida até"
+  // Snapshot imutável do câmbio no momento do envio (contrato ExchangeRateQuote
+  // de packages/db/src/finance/types.ts, gravado como Json — câmbio ≠ preço,
+  // nunca recalcula o preço automaticamente a partir disto).
+  cotacaoCambio   Json?    @map("cotacao_cambio")
+
+  // Sinalizadores comerciais DECLARADOS por quem cria a proposta — nunca
+  // inferidos algoritmicamente (o que é "excepcional" é uma decisão de
+  // negócio, não um limiar objetivo). Junto com desconto/margem (calculados
+  // pela política, ver packages/db/src/crm/proposta-politica.ts) decidem se
+  // um Gate COMERCIAL é exigido antes do envio.
+  condicaoExcepcional        Boolean @default(false) @map("condicao_excepcional")
+  compromissoExternoSensivel Boolean @default(false) @map("compromisso_externo_sensivel")
+
+  gateId       String?   @map("gate_id") // Gate COMERCIAL pendente/decidido quando a política exigiu aprovação
+  criadoPorId  String?   @map("criado_por_id")
+  enviadaEm    DateTime? @map("enviada_em")
+  aceitaEm     DateTime? @map("aceita_em")
+  recusadaEm   DateTime? @map("recusada_em")
+  motivoRecusa String?   @map("motivo_recusa")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant         Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead           Lead       @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: Cascade)
+  criadoPor      User?      @relation("PropostaCriadoPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  substitui      Proposal?  @relation("PropostaVersao", fields: [tenantId, substituiPropostaId], references: [tenantId, id], onDelete: SetNull)
+  substituidaPor Proposal[] @relation("PropostaVersao")
+  booking        Booking?
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, leadId])
+  @@map("proposals")
+}
+
+// Booking Foundation (PM-NIGHT-RUN-02, Etapa 1) — reserva/operação comercial
+// nascida de uma Proposal ACEITA. Deliberadamente NÃO duplica roteiro/preço/
+// moeda/datas/passageiros/condições — a Proposal aceita já É o snapshot
+// imutável dessas informações (uma proposta nunca é reescrita depois de
+// ENVIADA, ver Proposal Foundation 01), então Booking só PRECISA da FK; ler
+// esses dados é sempre `booking.proposal.*`. `@@unique([tenantId,
+// proposalId])` é a idempotência estrutural (nunca em nível de aplicação
+// só): uma Proposal só pode originar UM Booking — impossível duplicar por
+// duplo-clique/retry, o próprio banco rejeita a segunda tentativa.
+enum BookingStatus {
+  AGUARDANDO_PAGAMENTO
+  PAGAMENTO_PARCIAL
+  PAGO
+  AGUARDANDO_DOCUMENTOS
+  CONFIRMADA
+  EM_OPERACAO
+  CONCLUIDA
+  CANCELADA
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  tenantId      String        @map("tenant_id")
+  proposalId    String        @map("proposal_id")
+  leadId        String        @map("lead_id") // denormalizado de propósito (mesma FK que a Proposal já carrega) — permite consultar Bookings de um lead sem sempre passar por Proposal, mesmo padrão de AttributionTouch.leadId
+  responsavelId String?       @map("responsavel_id")
+  status        BookingStatus @default(AGUARDANDO_PAGAMENTO)
+  observacoes   String?
+  // Trip Operation Foundation (PM-NIGHT-RUN-02, Etapa 5) — nulável e
+  // 1:N de propósito (uma Trip pode reunir vários Bookings da mesma
+  // partida; um Booking pode existir ANTES de ser associado a uma
+  // partida operacional específica). Nunca presumir 1:1.
+  tripId        String?       @map("trip_id")
+  // PM-CONV-03 — vínculo operacional fino: uma Trip pode ter vários Groups
+  // (ex. dois ônibus na mesma partida); um Booking pertence a NO MÁXIMO um
+  // Group por vez (nulável — um Booking pode estar numa Trip sem ainda
+  // estar alocado a um Group específico). Independente de `tripId`: um
+  // Booking só entra num Group cujo `tripId` bate com o seu (validado em
+  // `trip-group.ts`, nunca só na UI — §17 do comando).
+  tripGroupId   String?       @map("trip_group_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  proposal    Proposal          @relation(fields: [tenantId, proposalId], references: [tenantId, id], onDelete: Cascade)
+  lead        Lead              @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: Cascade)
+  responsavel User?             @relation("BookingResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+  trip        Trip?             @relation(fields: [tenantId, tripId], references: [tenantId, id], onDelete: SetNull)
+  tripGroup   TripGroup?        @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: SetNull)
+  travelers   Traveler[]
+  payments    Payment[]
+  commissions Commission[]
+  checkins    TravelerCheckIn[]
+  tripReview  TripReview?
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, proposalId])
+  @@index([tenantId])
+  @@index([tenantId, leadId])
+  @@index([tenantId, tripId])
+  @@index([tenantId, tripGroupId])
+  @@map("bookings")
+}
+
+// Passageiro de um Booking — consumidor real já autorizado nesta mesma
+// janela (Etapa 4, Travel Document Foundation, referencia Traveler para
+// requisito/documento por pessoa). Privacy-by-design (§8 do comando):
+// SEM número de passaporte/documento sensível e SEM imagem de documento
+// nesta etapa — isso é explicitamente Etapa 4, com arquitetura de storage
+// segura própria, não inventada aqui.
+enum TravelerTipo {
+  ADULTO
+  CRIANCA
+  BEBE
+}
+
+model Traveler {
+  id                        String       @id @default(uuid())
+  tenantId                  String       @map("tenant_id")
+  bookingId                 String       @map("booking_id")
+  nome                      String
+  tipo                      TravelerTipo @default(ADULTO)
+  dataNascimento            DateTime?    @map("data_nascimento")
+  nacionalidade             String?
+  telefone                  String?
+  email                     String?
+  // PM-CONV-03 (Core Turístico) — ampliação do Traveler já existente em vez
+  // de um Passenger novo (§5 do comando: "preferir ampliar o modelo
+  // canônico existente"). Campos de passaporte/voo/guardião encontrados na
+  // entrega Valter 0.4.11, todos opcionais (nem toda viagem precisa deles
+  // no momento do cadastro do passageiro — só quando exigido, ex. antes do
+  // pagamento/embarque, decisão que fica para uma etapa futura).
+  passaporteTipo            String?      @map("passaporte_tipo")
+  passaporteNumero          String?      @map("passaporte_numero")
+  passaportePaisEmissor     String?      @map("passaporte_pais_emissor")
+  passaporteEmitidoEm       DateTime?    @map("passaporte_emitido_em")
+  passaporteValidoAte       DateTime?    @map("passaporte_valido_ate")
+  vooChegadaCompanhia       String?      @map("voo_chegada_companhia")
+  vooChegadaNumero          String?      @map("voo_chegada_numero")
+  vooChegadaAeroporto       String?      @map("voo_chegada_aeroporto")
+  vooChegadaEm              DateTime?    @map("voo_chegada_em")
+  vooPartidaCompanhia       String?      @map("voo_partida_companhia")
+  vooPartidaNumero          String?      @map("voo_partida_numero")
+  vooPartidaAeroporto       String?      @map("voo_partida_aeroporto")
+  vooPartidaEm              DateTime?    @map("voo_partida_em")
+  // Guardião — só relevante para menor/dependente (§7 do comando). Texto
+  // livre de propósito (não é um vínculo rígido com outro Traveler): o
+  // comando pede explicitamente para "não criar relações rígidas que
+  // impeçam outros tipos de vínculo".
+  guardiaoNome              String?      @map("guardiao_nome")
+  guardiaoEmail             String?      @map("guardiao_email")
+  guardiaoRelacao           String?      @map("guardiao_relacao")
+  contatoEmergenciaNome     String?      @map("contato_emergencia_nome")
+  contatoEmergenciaTelefone String?      @map("contato_emergencia_telefone")
+  createdAt                 DateTime     @default(now()) @map("created_at")
+  updatedAt                 DateTime     @updatedAt @map("updated_at")
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking   Booking            @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Cascade)
+  documents TravelerDocument[]
+  care      TravelerCare?
+  checkins  TravelerCheckIn[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, bookingId])
+  @@map("travelers")
+}
+
+// Dados de atendimento/saúde do passageiro (§8 do comando) — tabela SEPARADA
+// de `Traveler` de propósito: nunca aparece em listagens amplas de
+// passageiro, exige permissão própria (`passageiros.dados_sensiveis.*`,
+// mais restrita que `bookings.manage`), e carrega consentimento explícito.
+// Deliberadamente NÃO é um cadastro médico — só o mínimo operacionalmente
+// necessário (dieta/condições/medicação/frequência), sempre texto livre
+// informado por humano, nunca inferido.
+model TravelerCare {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  travelerId      String   @map("traveler_id")
+  dieta           String?
+  condicoes       String?
+  medicamentos    String?
+  frequencia      String?
+  consentimento   Boolean  @default(false)
+  registradoPorId String?  @map("registrado_por_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  traveler      Traveler @relation(fields: [tenantId, travelerId], references: [tenantId, id], onDelete: Cascade)
+  registradoPor User?    @relation("TravelerCareRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, travelerId])
+  @@index([tenantId])
+  @@map("traveler_cares")
+}
+
+// Payment Foundation (PM-NIGHT-RUN-02, Etapa 2) — domínio de pagamento
+// PROVIDER-NEUTRAL (§10 do comando: "PAYMENT ≠ GATEWAY"). `provider`/
+// `providerReference` são referências opacas opcionais — nenhum gateway
+// real (Stripe/Mercado Pago/PIX) está integrado nesta rodada, só o modo
+// MANUAL/OFFLINE (`provider: null`). `idempotencyKey` prepara a futura
+// integração com webhook (deduplicação de evento reentregue) mas não tem
+// nenhum consumidor de webhook ainda — só o contrato.
+//
+// Um Booking pode ter VÁRIOS Payment (parcela/sinal+saldo/pagamento único
+// — o modelo já suporta todos os três sem campo extra: "pagamento único" é
+// só um Booking com um Payment; parcelamento é vários Payment com
+// `vencimento` diferentes). Não duplica customer/contact — sempre
+// acessível via `payment.booking.lead.contact`, mesmo princípio de não
+// duplicar dado já alcançável por relação já usado em Booking.
+enum PaymentStatus {
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  PARCIALMENTE_PAGO
+  FALHOU
+  CANCELADO
+  REEMBOLSADO
+  PARCIALMENTE_REEMBOLSADO
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  tenantId          String        @map("tenant_id")
+  bookingId         String        @map("booking_id")
+  valor             Float
+  moeda             String
+  status            PaymentStatus @default(PENDENTE)
+  method            String? // texto livre (ex.: "pix", "cartao", "transferencia") — nunca decide lógica, só descreve
+  provider          String? // null = MANUAL/OFFLINE (padrão desta rodada); id de gateway real quando/se integrado no futuro
+  providerReference String?       @map("provider_reference") // id da transação no gateway — nulo em modo manual
+  idempotencyKey    String?       @map("idempotency_key") // dedup de webhook futuro — não usado ainda, só o contrato
+  vencimento        DateTime?
+  pagoEm            DateTime?     @map("pago_em")
+  canceladoEm       DateTime?     @map("cancelado_em")
+  estornadoEm       DateTime?     @map("estornado_em")
+  valorEstornado    Float?        @map("valor_estornado")
+  gateId            String?       @map("gate_id") // Gate FINANCEIRO quando um estorno foi solicitado
+  metadata          Json?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId])
+  @@index([tenantId, bookingId])
+  @@map("payments")
+}
+
+// Finance Core Real 01 (PM-NIGHT-RUN-02, Etapa 3) — reavaliação dos 9
+// contratos financeiros de Finance Core Foundation 02 (PM-NIGHT-RUN-01,
+// Etapa 4) agora que Booking/Payment são consumidores reais. Decisão
+// documentada por entidade em docs/FINANCE_CORE_REAL_01_FECHAMENTO.md
+// (matriz completa); resumo: `CommercialPolicy` e `Commission` promovidas
+// a tabela real (consumidor genuíno); `Refund` já resolvido inteiramente
+// pelo próprio `Payment` (status REEMBOLSADO/PARCIALMENTE_REEMBOLSADO,
+// Payment Foundation 01) — não duplicado aqui; `Receivable` vira uma
+// CONSULTA computada a partir de `Payment` (packages/db/src/receivables.ts),
+// não uma tabela nova, porque um `Payment` PENDENTE/PROCESSANDO já é
+// estruturalmente "uma obrigação financeira ainda não liquidada" — uma
+// tabela paralela duplicaria o mesmo dado; `FinancialAccount`/`Payable`/
+// `FinancialTransaction`/`CostCenter`/`RevenueCenter`/`FinancialCategory`
+// continuam só como contrato TypeScript (packages/db/src/finance/types.ts)
+// — nenhum consumidor real ainda.
+
+// Política comercial de aprovação de proposta (PM-NIGHT-RUN-02, Etapa 3,
+// §23) — corrige a limitação registrada em Proposal Foundation 01
+// ("limiares fixos, não configuráveis por tenant"). Uma linha por tenant
+// (`@@unique([tenantId])`); ausência de linha = usa `LIMITES_PADRAO` de
+// `crm/proposta-politica.ts` (mesmo valor que já era hardcoded antes desta
+// etapa — nenhuma mudança de comportamento pra quem nunca configurar).
+model CommercialPolicy {
+  id                            String   @id @default(uuid())
+  tenantId                      String   @unique @map("tenant_id")
+  limiteDescontoRelevante       Float    @default(0.15) @map("limite_desconto_relevante")
+  limiteMudancaPrecoExcepcional Float    @default(0.2) @map("limite_mudanca_preco_excepcional")
+  limiteMargemMinima            Float    @default(0.1) @map("limite_margem_minima")
+  atualizadoPorId               String?  @map("atualizado_por_id")
+  createdAt                     DateTime @default(now()) @map("created_at")
+  updatedAt                     DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  atualizadoPor User?  @relation("CommercialPolicyAtualizadoPor", fields: [atualizadoPorId], references: [id], onDelete: SetNull)
+
+  @@map("commercial_policies")
+}
+
+// Comissão de venda (PM-NIGHT-RUN-02, Etapa 3, §21) — consumidor real:
+// Booking.responsavelId já existe (o vendedor responsável pela reserva).
+// `beneficiarioId` é sempre um User desta casa por enquanto — parceiro/
+// afiliado/agente EXTERNO exigiria uma entidade Partner que não existe
+// ainda (mesma lacuna já documentada em Finance Core Foundation 02 pra
+// Payable). `percentual`/`valor`/`baseCalculo` são sempre informados por
+// um humano — nunca uma fórmula de comissão inventada automaticamente
+// (nenhuma regra de "X% sobre toda venda" existe ou é aplicada sozinha).
+enum CommissionStatus {
+  PREVISTA
+  CONFIRMADA
+  PAGA
+  CANCELADA
+}
+
+model Commission {
+  id             String           @id @default(uuid())
+  tenantId       String           @map("tenant_id")
+  bookingId      String           @map("booking_id")
+  // PM-CONV-04, Track C, §7C — "REUTILIZAR Commission existente, não criar
+  // PartnerCommission". `beneficiarioId` (User interno) ficou nulável e
+  // `partnerId` (Partner externo) foi adicionado — exatamente um dos dois
+  // deve estar preenchido, garantido por CHECK constraint na migration
+  // (não só por convenção de aplicação). Comissão de venda interna
+  // continua idêntica a antes (Etapa 3); comissão de indicação de parceiro
+  // passa a usar o mesmo model, mesma máquina de estados, mesmo Gate.
+  beneficiarioId String?          @map("beneficiario_id")
+  partnerId      String?          @map("partner_id")
+  baseCalculo    Float?           @map("base_calculo")
+  percentual     Float?
+  valor          Float
+  moeda          String
+  status         CommissionStatus @default(PREVISTA)
+  gateId         String?          @map("gate_id") // Gate FINANCEIRO quando o pagamento da comissão foi solicitado (§21: "alteração sensível pode exigir Gate")
+  pagaEm         DateTime?        @map("paga_em")
+  criadoPorId    String?          @map("criado_por_id")
+  // PM-CONV-08 — achado real: Payment/CostEvent já tinham idempotencyKey
+  // (dedup por (tenantId, key), pronto pra reenvio de webhook/retry futuro)
+  // mas Commission nunca ganhou o mesmo campo — criação dupla acidental
+  // (ex.: duplo clique/retry de rede no server action) não tinha proteção
+  // estrutural nenhuma. Mesmo padrão exato de Payment.idempotencyKey.
+  idempotencyKey String?          @map("idempotency_key")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking      Booking  @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Cascade)
+  beneficiario User?    @relation("CommissionBeneficiario", fields: [beneficiarioId], references: [id], onDelete: Restrict)
+  partner      Partner? @relation("CommissionPartner", fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Restrict)
+  criadoPor    User?    @relation("CommissionCriadoPor", fields: [criadoPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId])
+  @@index([tenantId, bookingId])
+  @@index([tenantId, beneficiarioId])
+  @@index([tenantId, partnerId])
+  @@map("commissions")
+}
+
+// Travel Document Foundation (PM-NIGHT-RUN-02, Etapa 4) — separa REQUISITO
+// (`DocumentRequirement`, catálogo reusável por tenant — ex.: "Passaporte
+// válido") de DOCUMENTO ENVIADO (`TravelerDocument`, uma linha por
+// passageiro × requisito). Permite mudar/desativar um requisito sem
+// destruir o histórico de quem já enviou o quê.
+//
+// PRIVACY-BY-DESIGN (§29 do comando): nenhum campo de arquivo/URL/caminho
+// existe em `TravelerDocument` — só metadata/status. Upload real de
+// documento fica explicitamente FORA desta rodada e é reportado como
+// YELLOW no relatório de fechamento: este ambiente não tem storage privado/
+// autenticado/com validação de MIME disponível, e o próprio comando
+// autoriza esse fallback ("se storage seguro não puder ser garantido,
+// implementar somente metadata/status").
+model DocumentRequirement {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nome        String
+  descricao   String?
+  obrigatorio Boolean  @default(true)
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  travelerDocuments TravelerDocument[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("document_requirements")
+}
+
+// Estados cobrem os 6 citados pelo comando (§30): PENDING/SUBMITTED/
+// UNDER_REVIEW/APPROVED/REJECTED/EXPIRED → PENDENTE/ENVIADO/EM_ANALISE/
+// APROVADO/REJEITADO/EXPIRADO. `EM_ANALISE` é uma etapa OPCIONAL (ENVIADO
+// pode ir direto pra APROVADO/REJEITADO quando a revisão é rápida) — ver
+// máquina de estados real em `packages/db/src/travel-documents.ts`.
+enum DocumentStatus {
+  PENDENTE
+  ENVIADO
+  EM_ANALISE
+  APROVADO
+  REJEITADO
+  EXPIRADO
+}
+
+model TravelerDocument {
+  id             String         @id @default(uuid())
+  tenantId       String         @map("tenant_id")
+  travelerId     String         @map("traveler_id")
+  requirementId  String         @map("requirement_id")
+  status         DocumentStatus @default(PENDENTE)
+  enviadoEm      DateTime?      @map("enviado_em")
+  revisadoEm     DateTime?      @map("revisado_em")
+  revisadoPorId  String?        @map("revisado_por_id")
+  motivoRejeicao String?        @map("motivo_rejeicao")
+  validadeAte    DateTime?      @map("validade_ate")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  traveler    Traveler            @relation(fields: [tenantId, travelerId], references: [tenantId, id], onDelete: Cascade)
+  requirement DocumentRequirement @relation(fields: [tenantId, requirementId], references: [tenantId, id], onDelete: Cascade)
+  revisadoPor User?               @relation("TravelerDocumentRevisadoPor", fields: [revisadoPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, travelerId, requirementId])
+  @@index([tenantId])
+  @@index([tenantId, travelerId])
+  @@map("traveler_documents")
+}
+
+// Trip Operation Foundation (PM-NIGHT-RUN-02, Etapa 5) — distingue BOOKING
+// (reserva/venda do cliente, já existente desde Booking Foundation 01) de
+// TRIP (execução operacional de uma partida). Relação 1:N deliberada
+// (`Booking.tripId` nulável) — uma Trip pode reunir vários Bookings da
+// mesma partida; um Booking pode existir sem Trip associada ainda. Nunca
+// presumido 1:1 (§33 do comando).
+//
+// Motor genericamente turístico: nenhum campo aqui é específico de
+// Marrocos — `roteiro`/`mercado` são texto livre preenchido pelo tenant,
+// o mesmo motor serve qualquer destino/mercado futuro.
+enum TripStatus {
+  PLANEJAMENTO
+  CONFIRMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+model Trip {
+  id                       String     @id @default(uuid())
+  tenantId                 String     @map("tenant_id")
+  roteiro                  String? // texto livre — ex. "Marraquexe + Deserto, 8 dias" — nunca hardcoded no motor
+  mercado                  String? // código de mercado livre (ex. "BR","PT") — Market continua só contrato (Finance Core Real 01), sem FK real
+  dataInicio               DateTime   @map("data_inicio")
+  dataFim                  DateTime   @map("data_fim")
+  timezone                 String // IANA tz de referência da operação
+  status                   TripStatus @default(PLANEJAMENTO)
+  responsavelOperacionalId String?    @map("responsavel_operacional_id") // distinto do responsável COMERCIAL do Booking (vendedor) — este é quem toca a operação
+  observacoes              String?
+  metadata                 Json?
+  createdAt                DateTime   @default(now()) @map("created_at")
+  updatedAt                DateTime   @updatedAt @map("updated_at")
+
+  tenant                 Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  responsavelOperacional User?               @relation("TripResponsavelOperacional", fields: [responsavelOperacionalId], references: [id], onDelete: SetNull)
+  bookings               Booking[]
+  itinerarioDias         TripItineraryDay[]
+  checklist              TripChecklistItem[]
+  grupos                 TripGroup[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("trips")
+}
+
+// Itinerário operacional — dia a dia. `numeroDia` é só ordenação amigável
+// (dia 1, dia 2...); `data` é a data real, permitindo reordenar/inserir
+// sem renumerar tudo.
+model TripItineraryDay {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  tripId      String   @map("trip_id")
+  numeroDia   Int      @map("numero_dia")
+  data        DateTime
+  titulo      String?
+  observacoes String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trip       Trip           @relation(fields: [tenantId, tripId], references: [tenantId, id], onDelete: Cascade)
+  atividades TripActivity[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, tripId, numeroDia])
+  @@index([tenantId])
+  @@index([tenantId, tripId])
+  @@map("trip_itinerary_days")
+}
+
+// Atividade dentro de um dia do itinerário. `horaInicio`/`horaFim` são
+// texto livre (ex. "09:00") — o dia já carrega a data real, separar só a
+// hora evita ambiguidade de timezone desnecessária pra uma fundação.
+// `fornecedorReferencia` é texto livre opaco (Supplier Engine completo é
+// explicitamente fora de escopo, §36) — nenhuma entidade Supplier real
+// existe ainda (mesma lacuna já documentada em Finance Core Real 01 pra
+// Payable/Commission).
+model TripActivity {
+  id                   String   @id @default(uuid())
+  tenantId             String   @map("tenant_id")
+  itineraryDayId       String   @map("itinerary_day_id")
+  nome                 String
+  descricao            String?
+  local                String?
+  horaInicio           String?  @map("hora_inicio")
+  horaFim              String?  @map("hora_fim")
+  instrucoes           String? // instruções internas — nunca exibidas ao viajante
+  visivelParaViajante  Boolean  @default(true) @map("visivel_para_viajante") // prepara Traveler Area (Etapa 6) sem construí-la aqui
+  fornecedorReferencia String?  @map("fornecedor_referencia") // texto livre — mantido por compatibilidade (Trip Operation Foundation 01)
+  // PM-CONV-03 — agora que `Supplier` existe como entidade real, uma
+  // atividade PODE referenciar um fornecedor cadastrado (nulável — nem
+  // toda atividade tem/precisa de um fornecedor formal; `fornecedorReferencia`
+  // continua disponível para o caso de texto livre sem cadastro).
+  fornecedorId         String?  @map("fornecedor_id")
+  // PM-CONV-05, Track A — coordenadas REAIS da parada, opcionais (nem toda
+  // atividade precisa aparecer no mapa; texto livre em `local` continua
+  // valendo pra quem não tem coordenada). Sem isso o mapa operacional não
+  // tem onde desenhar "parada atual"/"próxima parada".
+  latitude             Float?
+  longitude            Float?
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itineraryDay TripItineraryDay       @relation(fields: [tenantId, itineraryDayId], references: [tenantId, id], onDelete: Cascade)
+  fornecedor   Supplier?              @relation(fields: [tenantId, fornecedorId], references: [tenantId, id], onDelete: SetNull)
+  progresso    TripActivityProgress[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, itineraryDayId])
+  @@index([tenantId, fornecedorId])
+  @@map("trip_activities")
+}
+
+// Checklist operacional genérico (§36) — categorias fechadas citadas
+// explicitamente pelo comando; item de checklist é só um marcador
+// concluído/pendente, sem máquina de estados própria (foundation).
+enum TripChecklistCategoria {
+  DOCUMENTOS
+  PAGAMENTO
+  FORNECEDORES
+  TRANSPORTE
+  HOSPEDAGEM
+  ATIVIDADES
+  TRANSFER
+  OUTRO
+}
+
+model TripChecklistItem {
+  id          String                 @id @default(uuid())
+  tenantId    String                 @map("tenant_id")
+  tripId      String                 @map("trip_id")
+  categoria   TripChecklistCategoria
+  titulo      String
+  concluido   Boolean                @default(false)
+  observacoes String?
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trip   Trip   @relation(fields: [tenantId, tripId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, tripId])
+  @@map("trip_checklist_items")
+}
+
+// ============================================================================
+// PM-CONV-03 — Core Turístico Canônico
+// ============================================================================
+//
+// Decisões arquiteturais tomadas nesta rodada (documentadas aqui porque são
+// a razão de existirem — ou não existirem — os models abaixo; detalhe
+// completo em docs/PM_CONV_03_RESULTADO.md):
+//
+// 1. TRAVELER, não Passenger novo — ver ampliação de `Traveler` acima.
+// 2. PROFESSIONAL único (pessoa + papéis), não Guide/Driver separados
+//    (§10): uma mesma pessoa pode ser GUIA e MOTORISTA ao mesmo tempo sem
+//    duplicar cadastro (nome/telefone/e-mail/idioma/agenda uma vez só).
+// 3. TRIP/DEPARTURE — decisão: NÃO criar Departure. `Trip` (Trip Operation
+//    Foundation 01) já representa uma OCORRÊNCIA datada e operável (tem
+//    dataInicio/dataFim/status própria) — não é um "produto reutilizável"
+//    (não existe Route/Package no schema oficial hoje; o preço/roteiro vive
+//    na Proposal aceita). Criar Departure duplicaria exatamente o que Trip
+//    já é. Se um dia existir um catálogo de roteiros reutilizáveis (Route),
+//    Trip passaria a ser a ocorrência DESSE catálogo — decisão adiada até
+//    existir a necessidade real, não inventada agora.
+// 4. STOP — decisão: NÃO criar Stop. `TripActivity` (Trip Operation
+//    Foundation 01) já é a parada/atividade do itinerário. O que faltava
+//    era só ESTADO OPERACIONAL (planejada/atual/concluída/pulada), que não
+//    faz sentido morar em `TripActivity` porque o mesmo itinerário pode
+//    estar em estados diferentes para Groups diferentes da mesma Trip
+//    (dois ônibus na mesma parada em momentos distintos) — por isso
+//    `TripActivityProgress` é uma tabela própria, por (Group × Activity),
+//    e não um campo em `TripActivity`.
+// 5. GPS/QR/PWA — nenhum model novo nesta rodada (§23/§21/§24 do comando:
+//    preparar terreno, não implementar). `TripGroup`/`Booking.tripGroupId`
+//    já dão o que uma futura Arrival/Boarding vai precisar referenciar.
+// 6. PARTNER — não tocado (§20, fora de escopo — PM-CONV-04).
+// 7. IDEMPOTÊNCIA — nenhum mecanismo novo (§18): todas as mutações deste
+//    bloco são ações administrativas síncronas (sem webhook/retry externo
+//    envolvido), o mesmo raciocínio que já levou Payment a ter
+//    `idempotencyKey` não se aplica aqui por falta de gatilho externo
+//    reentregável. Referência para quando houver: `Payment.idempotencyKey`.
+
+// Profissional turístico (guia e/ou motorista) — pessoa + papéis, nunca
+// dois cadastros pra mesma pessoa com funções diferentes (§10). NÃO é um
+// `User` do CRM (não faz login no sistema) — é um cadastro operacional,
+// como Supplier/TourVehicle abaixo.
+enum ProfessionalPapel {
+  GUIA
+  MOTORISTA
+}
+
+model Professional {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nome        String
+  telefone    String?
+  email       String?
+  idiomas     String? // texto livre, ex. "pt, en, fr" — mesmo padrão de Traveler.nacionalidade
+  documento   String? // identificação/documento profissional — texto livre, não é passaporte de viajante
+  ativo       Boolean  @default(true)
+  observacoes String?
+  // PM-CONV-05, Track A/B — link opcional para um User que pode logar como
+  // este profissional (app mobile do guia/motorista). Nulo = profissional
+  // sem acesso de login, só cadastro operacional (comportamento anterior
+  // preservado). `@unique` porque um mesmo User só pode estar ligado a UM
+  // Professional no sistema inteiro — nunca ambíguo qual profissional está
+  // logado (User.id já é globalmente único, então isso também isola por
+  // tenant na prática).
+  userId      String?  @unique @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user             User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  atribuicoes      TripGroupProfissional[]
+  trackingSessions TrackingSession[]
+  tripIncidents    TripIncident[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("professionals")
+}
+
+// Fornecedor turístico (hotel, restaurante, agência local, etc.) — mesmo
+// nível de "cadastro operacional" que Professional/TourVehicle. Contas a
+// pagar completas ficam para Finance Core futuro (§11) — aqui é só
+// identificação/relacionamento.
+model Supplier {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nome        String
+  tipo        String? // texto livre (ex. "hotel", "restaurante", "guia local") — catálogo fechado seria prematuro nesta fundação
+  cidade      String?
+  contato     String?
+  email       String?
+  servicos    String?
+  ativo       Boolean  @default(true)
+  observacoes String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  atividades TripActivity[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("suppliers")
+}
+
+// Veículo — EXCLUSIVAMENTE recurso de operação turística (ônibus/van/carro
+// usado numa saída). NÃO é o domínio KeroCar (telemetria/OBD2), que foi
+// extraído para projeto próprio e permanece removido deste schema — ver
+// migration `20260915000000_remove_kerocar_domain`. Nome `TourVehicle`
+// deliberadamente distinto de `Vehicle` para nunca confundir os dois no
+// código ou em migrations futuras.
+model TourVehicle {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  nome         String
+  placa        String?
+  categoria    String?
+  capacidade   Int
+  fornecedorId String?  @map("fornecedor_id") // dono/operador do veículo, quando terceirizado
+  ativo        Boolean  @default(true)
+  observacoes  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  grupos TripGroup[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("tour_vehicles")
+}
+
+// Grupo operacional — o que a 0.4.11 chamava de "group": um subconjunto de
+// Bookings da MESMA Trip, com crew (guia(s)/motorista(s)) e veículo
+// atribuídos. Uma Trip pode ter vários Groups (ex. dois ônibus na mesma
+// partida). Conflito de agenda (§17) é validado em `trip-group.ts`, nunca
+// só na UI: mesmo profissional/veículo não pode estar em dois Groups cujas
+// Trips tenham datas sobrepostas.
+model TripGroup {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  tripId      String   @map("trip_id")
+  nome        String
+  veiculoId   String   @map("veiculo_id")
+  observacoes String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trip          Trip                    @relation(fields: [tenantId, tripId], references: [tenantId, id], onDelete: Cascade)
+  veiculo       TourVehicle             @relation(fields: [tenantId, veiculoId], references: [tenantId, id], onDelete: Restrict)
+  bookings         Booking[]
+  profissionais    TripGroupProfissional[]
+  progresso        TripActivityProgress[]
+  checkins         TravelerCheckIn[]
+  trackingSessions TrackingSession[]
+  incidentes       TripIncident[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, tripId])
+  @@index([tenantId, veiculoId])
+  @@map("trip_groups")
+}
+
+// Tabela de associação Group × Professional × Papel — permite a mesma
+// pessoa aparecer duas vezes no mesmo Group com papéis diferentes (GUIA +
+// MOTORISTA), mas nunca duplicada com o MESMO papel no MESMO Group.
+model TripGroupProfissional {
+  id             String            @id @default(uuid())
+  tenantId       String            @map("tenant_id")
+  tripGroupId    String            @map("trip_group_id")
+  professionalId String            @map("professional_id")
+  papel          ProfessionalPapel
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripGroup    TripGroup    @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: Cascade)
+  professional Professional @relation(fields: [tenantId, professionalId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, tripGroupId, professionalId, papel])
+  @@index([tenantId])
+  @@index([tenantId, tripGroupId])
+  @@index([tenantId, professionalId])
+  @@map("trip_group_professionals")
+}
+
+// Progresso operacional de uma parada — por (Group × Activity), NUNCA só
+// por Activity (§4 da nota de decisões acima: dois Groups na mesma Trip
+// podem estar em paradas diferentes ao mesmo tempo). Reaproveita a REGRA
+// funcional da 0.4.11 (planned/current/completed/skipped), não o dado de
+// GPS (§16 do comando: "não implementar GPS nesta fase").
+enum TripActivityProgressStatus {
+  PLANEJADA
+  ATUAL
+  CONCLUIDA
+  PULADA
+}
+
+model TripActivityProgress {
+  id              String                     @id @default(uuid())
+  tenantId        String                     @map("tenant_id")
+  tripGroupId     String                     @map("trip_group_id")
+  tripActivityId  String                     @map("trip_activity_id")
+  status          TripActivityProgressStatus @default(PLANEJADA)
+  atualizadoPorId String?                    @map("atualizado_por_id")
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  updatedAt       DateTime                   @updatedAt @map("updated_at")
+
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripGroup     TripGroup    @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: Cascade)
+  tripActivity  TripActivity @relation(fields: [tenantId, tripActivityId], references: [tenantId, id], onDelete: Cascade)
+  atualizadoPor User?        @relation("TripActivityProgressAtualizadoPor", fields: [atualizadoPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, tripGroupId, tripActivityId])
+  @@index([tenantId])
+  @@index([tenantId, tripGroupId])
+  @@index([tenantId, tripActivityId])
+  @@map("trip_activity_progress")
+}
+
+// ============================================================================
+// PM-CONV-04 — Track A: QR + Check-in + Boarding
+// ============================================================================
+//
+// Decisão de modelagem (§5A do comando): antes de criar Arrival/CheckIn/
+// Boarding/Voucher/Credential/Token como models SEPARADOS, avaliado que o
+// ciclo de vida inteiro de um passageiro dentro de um TripGroup (agendado →
+// check-in → embarque → no-show/cancelado) é um ÚNICO estado que evolui —
+// não múltiplos eventos independentes. Um model único (`TravelerCheckIn`)
+// evita "motor paralelo desnecessário" (§10A) e mantém a máquina de
+// estados simples de auditar. Auditoria da 0.4.11 (PM_CONV_02_INVENTARIO.md)
+// confirmou o mesmo padrão de token opaco (`bin2hex`) — reaproveitado como
+// LÓGICA (hash + validade + tenant), nunca o código PHP em si.
+enum CheckInStatus {
+  AGENDADO
+  CHECKIN_REALIZADO
+  EMBARCADO
+  NO_SHOW
+  CANCELADO
+}
+
+model TravelerCheckIn {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  tripGroupId String        @map("trip_group_id")
+  travelerId  String        @map("traveler_id")
+  bookingId   String        @map("booking_id") // denormalizado de propósito — mesmo padrão de Booking.leadId
+  status      CheckInStatus @default(AGENDADO)
+
+  // Credencial QR — SEMPRE opaca (§6A): nunca Booking/Traveler/TripGroup ID.
+  // Token bruto (hex aleatório, 48 chars) é devolvido ao chamador UMA VEZ na
+  // emissão e NUNCA persistido — só o hash SHA-256 fica no banco (mesmo
+  // princípio de SecretProvider: nunca guardar o segredo em texto plano).
+  credencialTokenHash  String?   @unique @map("credencial_token_hash")
+  credencialEmitidaEm  DateTime? @map("credencial_emitida_em")
+  credencialExpiraEm   DateTime? @map("credencial_expira_em")
+  credencialRevogadaEm DateTime? @map("credencial_revogada_em")
+
+  checkinEm     DateTime? @map("checkin_em")
+  checkinPorId  String?   @map("checkin_por_id")
+  embarqueEm    DateTime? @map("embarque_em")
+  embarquePorId String?   @map("embarque_por_id")
+  noShowEm      DateTime? @map("no_show_em")
+  noShowPorId   String?   @map("no_show_por_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripGroup   TripGroup @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: Cascade)
+  traveler    Traveler  @relation(fields: [tenantId, travelerId], references: [tenantId, id], onDelete: Cascade)
+  booking     Booking   @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Cascade)
+  checkinPor  User?     @relation("TravelerCheckInCheckinPor", fields: [checkinPorId], references: [id], onDelete: SetNull)
+  embarquePor User?     @relation("TravelerCheckInEmbarquePor", fields: [embarquePorId], references: [id], onDelete: SetNull)
+  noShowPor   User?     @relation("TravelerCheckInNoShowPor", fields: [noShowPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, tripGroupId, travelerId]) // um passageiro tem UM ciclo de vida por grupo — reemitir credencial reusa a mesma linha
+  @@index([tenantId])
+  @@index([tenantId, tripGroupId])
+  @@index([tenantId, travelerId])
+  @@index([tenantId, bookingId])
+  @@map("traveler_checkins")
+}
+
+// ============================================================================
+// PM-CONV-04 — Track C: Partner + Commission Integration + Rewards
+// ============================================================================
+//
+// Partner é uma pessoa/empresa EXTERNA (nunca um User do CRM) que indica
+// clientes e recebe comissão — distinto de `responsavelId` em Booking (um
+// vendedor INTERNO). `codigo` é o identificador público que o parceiro usa
+// (mesmo conceito do "partnerCode" encontrado na auditoria da 0.4.11,
+// PM_CONV_02_INVENTARIO.md — reaproveitado como IDEIA, não como código).
+model Partner {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  nome        String
+  codigo      String // identificador público (compartilhado com o parceiro para indicação)
+  tipo        String? // texto livre — mesmo padrão de Supplier.tipo, catálogo fechado seria prematuro
+  contato     String?
+  email       String?
+  origem      String?
+  ativo       Boolean  @default(true)
+  observacoes String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  comissoes    Commission[]      @relation("CommissionPartner")
+  indicacoes   PartnerReferral[]
+  rewardClaims RewardClaim[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, codigo])
+  @@index([tenantId])
+  @@map("partners")
+}
+
+// Rastreia a origem de indicação de um Lead por um Partner — DISTINTO de
+// `AttributionTouch` (T6, atribuição de MARKETING). Os dois conceitos
+// coexistem deliberadamente (§6C do comando): um Lead pode ter attribution
+// de campanha E referral de parceiro ao mesmo tempo, sem um sobrescrever o
+// outro.
+model PartnerReferral {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  partnerId String   @map("partner_id")
+  leadId    String   @map("lead_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  partner Partner @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Cascade)
+  lead    Lead    @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, leadId]) // um Lead só pode ter UMA origem de indicação de parceiro
+  @@index([tenantId])
+  @@index([tenantId, partnerId])
+  @@map("partner_referrals")
+}
+
+// Premiação por meta de vendas — DISTINTA de Commission por semântica real
+// (§10C): Commission é por VENDA individual; RewardClaim é por META
+// atingida numa janela de campanha. Reaproveita Gate FINANCEIRO + o
+// fingerprint novo (Gate.subjectFingerprint) — nunca um segundo motor de
+// pagamento.
+model RewardCampaign {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  nome       String
+  meta       Int // nº de vendas/embarques necessários na janela
+  valor      Float // segue o padrão monetário JÁ EXISTENTE no projeto (Float, mesmo de Payment/Commission/Proposal) — não introduzir Decimal isolado
+  moeda      String
+  dataInicio DateTime @map("data_inicio")
+  dataFim    DateTime @map("data_fim")
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  claims RewardClaim[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("reward_campaigns")
+}
+
+enum RewardClaimStatus {
+  SOLICITADA
+  APROVADA
+  PAGA
+  REJEITADA
+}
+
+model RewardClaim {
+  id           String            @id @default(uuid())
+  tenantId     String            @map("tenant_id")
+  campaignId   String            @map("campaign_id")
+  partnerId    String            @map("partner_id")
+  status       RewardClaimStatus @default(SOLICITADA)
+  gateId       String?           @map("gate_id")
+  solicitadaEm DateTime          @default(now()) @map("solicitada_em")
+  pagaEm       DateTime?         @map("paga_em")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign RewardCampaign @relation(fields: [tenantId, campaignId], references: [tenantId, id], onDelete: Cascade)
+  partner  Partner        @relation(fields: [tenantId, partnerId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, campaignId, partnerId]) // um pedido de premiação por parceiro por campanha
+  @@index([tenantId])
+  @@index([tenantId, partnerId])
+  @@map("reward_claims")
+}
+
+// ============================================================================
+// PM-CONV-04 — Track D: Ouvidoria / Support
+// ============================================================================
+//
+// Decisão de modelagem (§5D do comando): SupportTicket é pós-venda/
+// reclamação/elogio — semanticamente distinto de Lead (funil comercial) e
+// Conversation/Message (atendimento em tempo real). `conversationId` em
+// `SupportTicketMessage` é OPCIONAL — permite referenciar uma mensagem do
+// Inbox/WhatsApp quando o ticket nasceu de uma conversa, sem duplicar o
+// conteúdo (mesmo princípio de nunca duplicar dado já alcançável por
+// relação, usado em Booking→Proposal desde a Etapa 1).
+enum SupportTicketCategoria {
+  RECLAMACAO
+  ELOGIO
+  DUVIDA
+  SOLICITACAO
+  OUTRO
+}
+
+enum SupportTicketPrioridade {
+  BAIXA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum SupportTicketStatus {
+  ABERTO
+  EM_ANDAMENTO
+  RESOLVIDO
+  FECHADO
+}
+
+model SupportTicket {
+  id                  String                  @id @default(uuid())
+  tenantId            String                  @map("tenant_id")
+  protocolo           String // sequencial legível, ex. "OUV-2026-000001" — nunca exposto como ID de banco
+  leadId              String?                 @map("lead_id")
+  categoria           SupportTicketCategoria
+  prioridade          SupportTicketPrioridade @default(NORMAL)
+  status              SupportTicketStatus     @default(ABERTO)
+  assunto             String
+  responsavelId       String?                 @map("responsavel_id")
+  origem              String? // texto livre: "whatsapp", "site", "telefone"...
+  slaVencimento       DateTime?               @map("sla_vencimento")
+  resolucao           String?
+  avaliacaoNota       Int?                    @map("avaliacao_nota") // 1-5, preenchido pelo cliente após FECHADO
+  avaliacaoComentario String?                 @map("avaliacao_comentario")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead        Lead?                  @relation(fields: [tenantId, leadId], references: [tenantId, id], onDelete: SetNull)
+  responsavel User?                  @relation("SupportTicketResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
+  mensagens   SupportTicketMessage[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, protocolo])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, leadId])
+  @@map("support_tickets")
+}
+
+enum SupportTicketAutorTipo {
+  CLIENTE
+  EQUIPE
+}
+
+model SupportTicketMessage {
+  id             String                 @id @default(uuid())
+  tenantId       String                 @map("tenant_id")
+  ticketId       String                 @map("ticket_id")
+  autorTipo      SupportTicketAutorTipo @map("autor_tipo")
+  autorUserId    String?                @map("autor_user_id") // só quando autorTipo=EQUIPE
+  corpo          String
+  conversationId String?                @map("conversation_id") // referência opcional ao Inbox — nunca duplica a Message
+  createdAt      DateTime               @default(now()) @map("created_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ticket       SupportTicket @relation(fields: [tenantId, ticketId], references: [tenantId, id], onDelete: Cascade)
+  autorUser    User?         @relation("SupportTicketMessageAutor", fields: [autorUserId], references: [id], onDelete: SetNull)
+  conversation Conversation? @relation(fields: [tenantId, conversationId], references: [tenantId, id], onDelete: SetNull)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, ticketId])
+  @@map("support_ticket_messages")
+}
+
+// ============================================================================
+// PM-CONV-05 — Track A: GPS / Mapas / Live Location
+// ============================================================================
+//
+// Decisão de modelagem: tracking é sempre uma SESSÃO explícita (início/fim),
+// nunca "profissional sempre rastreado" — §16 do comando (PM-CONV-03/04)
+// já tinha deixado GPS de fora de propósito; agora que está autorizado, a
+// mesma cautela vira regra: só existe ping de localização dentro de uma
+// TrackingSession ATIVA (validado em `geolocation.ts`, nunca só pela UI).
+// Uma unique index PARCIAL (ver migration, `WHERE status = 'ATIVA'`) garante
+// no banco que nunca existem duas sessões ativas para o mesmo profissional
+// no mesmo grupo — defesa em profundidade, mesmo padrão da CHECK constraint
+// XOR de Commission (PM-CONV-04).
+enum TrackingSessionStatus {
+  ATIVA
+  FINALIZADA
+}
+
+model TrackingSession {
+  id              String                @id @default(uuid())
+  tenantId        String                @map("tenant_id")
+  tripGroupId     String                @map("trip_group_id")
+  professionalId  String                @map("professional_id")
+  status          TrackingSessionStatus @default(ATIVA)
+  iniciadoEm      DateTime              @default(now()) @map("iniciado_em")
+  iniciadoPorId   String?               @map("iniciado_por_id")
+  finalizadoEm    DateTime?             @map("finalizado_em")
+  finalizadoPorId String?               @map("finalizado_por_id")
+
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripGroup     TripGroup         @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: Cascade)
+  professional  Professional      @relation(fields: [tenantId, professionalId], references: [tenantId, id], onDelete: Restrict)
+  iniciadoPor   User?             @relation("TrackingSessionIniciadoPor", fields: [iniciadoPorId], references: [id], onDelete: SetNull)
+  finalizadoPor User?             @relation("TrackingSessionFinalizadoPor", fields: [finalizadoPorId], references: [id], onDelete: SetNull)
+  pings         GeolocationPing[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, tripGroupId])
+  @@index([tenantId, professionalId])
+  @@map("tracking_sessions")
+}
+
+// Fonte do ping — nunca usado pra "enfeitar" o mapa, só metadado real
+// devolvido pelo dispositivo (Geolocation API do navegador expõe
+// accuracy; não expõe a fonte exata, então MANUAL cobre o caso raro de
+// correção operacional manual, nunca dado inventado).
+enum GeolocationSource {
+  GPS
+  NETWORK
+  MANUAL
+}
+
+model GeolocationPing {
+  id                String            @id @default(uuid())
+  tenantId          String            @map("tenant_id")
+  trackingSessionId String            @map("tracking_session_id")
+  latitude          Float
+  longitude         Float
+  accuracy          Float? // metros, quando o dispositivo informa
+  source            GeolocationSource @default(GPS)
+  capturedAt        DateTime          @map("captured_at") // timestamp do dispositivo, não do servidor
+  createdAt         DateTime          @default(now()) @map("created_at")
+
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trackingSession TrackingSession @relation(fields: [tenantId, trackingSessionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, trackingSessionId, capturedAt])
+  @@map("geolocation_pings")
+}
+
+// PM-CONV-05, Track B — ocorrência operacional registrada pelo guia/
+// motorista em campo (atraso, imprevisto, problema com fornecedor/veículo
+// etc.). Deliberadamente simples (texto livre + severidade) — não é um
+// segundo sistema de ticket (isso já existe: SupportTicket/Ouvidoria, que é
+// voltado a cliente, não a operação interna). Nunca editável/removível
+// depois de criada — registro operacional, mesmo espírito de
+// append-only do Audit Log.
+enum TripIncidentSeveridade {
+  BAIXA
+  MEDIA
+  ALTA
+}
+
+model TripIncident {
+  id             String                  @id @default(uuid())
+  tenantId       String                  @map("tenant_id")
+  tripGroupId    String                  @map("trip_group_id")
+  professionalId String                  @map("professional_id")
+  severidade     TripIncidentSeveridade  @default(MEDIA)
+  descricao      String
+  createdAt      DateTime                @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tripGroup    TripGroup    @relation(fields: [tenantId, tripGroupId], references: [tenantId, id], onDelete: Cascade)
+  professional Professional @relation(fields: [tenantId, professionalId], references: [tenantId, id], onDelete: Restrict)
+
+  @@index([tenantId])
+  @@index([tenantId, tripGroupId])
+  @@map("trip_incidents")
+}
+
+// ============================================================================
+// PM-CONV-10 — Notifications Foundation. Domínio genérico (§2 do comando:
+// "IN_APP/EMAIL/WHATSAPP/PUSH/WEBHOOK pros eventos que já existem"). Nasce
+// com UM canal real (IN_APP — sem credencial externa nenhuma) e o contrato
+// pronto pros outros 4; WHATSAPP reaproveita a integração real já existente
+// (Job Engine, T5) em vez de duplicar; EMAIL/PUSH ficam WAITING_EXTERNAL
+// (nenhum provider configurado neste ambiente — nunca simulado).
+// ============================================================================
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  PUSH
+  WEBHOOK
+}
+
+// ============================================================================
+// PM-CONV-10 — Post-Trip Foundation. Avaliação/NPS + depoimento do cliente,
+// sempre ligada a um Booking já CONCLUIDA (nunca durante a viagem, nunca
+// antes de pagamento). `depoimentoAutorizado` (consentimento do cliente) e
+// `depoimentoPublicado` (decisão de um humano da equipe) são campos
+// SEPARADOS de propósito — consentir nunca publica sozinho (§ do comando:
+// "nunca publicação automática").
+// ============================================================================
+
+model TripReview {
+  id                   String    @id @default(uuid())
+  tenantId             String    @map("tenant_id")
+  bookingId            String    @map("booking_id")
+  nota                 Int // 1–5, validado em aplicação (CHECK também em banco)
+  comentario           String?
+  depoimentoAutorizado Boolean   @default(false) @map("depoimento_autorizado") // consentimento do CLIENTE — nunca marcado por um humano da equipe em nome dele
+  depoimentoPublicado  Boolean   @default(false) @map("depoimento_publicado") // decisão separada de um humano da equipe — nunca automática, mesmo com consentimento
+  publicadoPorId       String?   @map("publicado_por_id")
+  publicadoEm          DateTime? @map("publicado_em")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  tenant       Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  booking      Booking @relation(fields: [tenantId, bookingId], references: [tenantId, id], onDelete: Cascade)
+  publicadoPor User?   @relation("TripReviewPublicadoPor", fields: [publicadoPorId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, bookingId]) // uma avaliação por reserva
+  @@index([tenantId])
+  @@map("trip_reviews")
+}
+
+model Notification {
+  id              String              @id @default(uuid())
+  tenantId        String              @map("tenant_id")
+  destinatarioId  String              @map("destinatario_id") // sempre um User desta casa — notificação pro cliente final é outro canal (WhatsApp/email direto), nunca esta tabela
+  canal           NotificationChannel @default(IN_APP)
+  tipo            String // categoria curta e estável (ex.: "pagamento_recebido", "proposta_aceita") — nunca usada em lógica de negócio fora deste domínio, só pra agrupar/filtrar
+  titulo          String
+  corpo           String
+  lida            Boolean             @default(false)
+  lidaEm          DateTime?           @map("lida_em")
+  // Referência opaca à entidade que originou a notificação (ex.: "Booking"/id) —
+  // nunca uma FK real (a notificação precisa sobreviver mesmo se o link de
+  // navegação de um evento específico mudar de forma no futuro).
+  entidadeTipo    String?             @map("entidade_tipo")
+  entidadeId      String?             @map("entidade_id")
+  createdAt       DateTime            @default(now()) @map("created_at")
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  destinatario User   @relation(fields: [destinatarioId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, destinatarioId, lida])
+  @@map("notifications")
+}

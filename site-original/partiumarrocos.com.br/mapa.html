@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa do Tesouro · Partiu Marrocos</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,600&family=Outfit:wght@300;400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#4A3418; --ink2:#6E5228; --sepia:#8B5A2B; --blood:#8B2E1D;
+  --parch1:#EFDDB4; --parch2:#E3C892; --parch3:#D2B279;
+  --night:#06080F; --amber:#F2A93B; --bone:#EDE4D3; --line:rgba(237,228,211,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--night);font-family:"Outfit",sans-serif;min-height:100vh;color:var(--bone)}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#000;border-bottom:1px solid var(--line);font-family:"Space Mono",monospace;font-size:.64rem;letter-spacing:.14em}
+.topbar b{color:var(--amber)}
+.topbar .sp{flex:1}
+.tbtn{font-family:"Space Mono",monospace;font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:11px 16px;border-radius:3px}
+.tbtn.gold{background:var(--amber);color:var(--night)}
+.tbtn.gold:hover{background:#F8C972}
+.tbtn.ghost{border:1px solid var(--line)}
+.tbtn.ghost:hover{border-color:var(--amber);color:var(--amber)}
+.stagewrap{padding:26px 14px 60px;display:flex;justify-content:center}
+/* ============ O PERGAMINHO ============ */
+.parch{
+  position:relative;width:min(1120px,96vw);aspect-ratio:297/210;overflow:hidden;
+  color:var(--ink);border-radius:6px;
+  background:
+    radial-gradient(130% 110% at 30% 20%, var(--parch1) 0%, var(--parch2) 55%, var(--parch3) 100%);
+  box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 0 90px rgba(90,60,20,.28), inset 0 0 14px rgba(90,60,20,.22);
+}
+.parch::before{ /* textura de fibras */
+  content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:multiply;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .05' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .42 0 0 0 0 .22 0 0 0 .10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.parch::after{ /* manchas de idade nos cantos */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(24% 30% at 3% 5%, rgba(110,74,30,.30), transparent 70%),
+    radial-gradient(20% 26% at 98% 8%, rgba(110,74,30,.24), transparent 70%),
+    radial-gradient(26% 32% at 96% 96%, rgba(110,74,30,.30), transparent 70%),
+    radial-gradient(22% 26% at 4% 94%, rgba(110,74,30,.26), transparent 70%);
+}
+.border-frame{position:absolute;inset:16px;border:2.5px solid rgba(90,60,24,.75);border-radius:4px;pointer-events:none;z-index:3}
+.border-frame::before{content:"";position:absolute;inset:5px;border:1px solid rgba(90,60,24,.5);border-radius:3px}
+.corner{position:absolute;width:34px;height:34px;border:2.5px solid rgba(90,60,24,.75);z-index:4}
+.corner.tl{top:9px;left:9px;border-right:0;border-bottom:0;border-radius:4px 0 0 0}
+.corner.tr{top:9px;right:9px;border-left:0;border-bottom:0;border-radius:0 4px 0 0}
+.corner.bl{bottom:9px;left:9px;border-right:0;border-top:0;border-radius:0 0 0 4px}
+.corner.br{bottom:9px;right:9px;border-left:0;border-top:0;border-radius:0 0 4px 0}
+.inner{position:absolute;inset:16px;padding:2.6% 3.2%;display:flex;flex-direction:column;z-index:2}
+/* cabeçalho */
+.mhead{display:flex;align-items:baseline;gap:2.2%;border-bottom:1.5px solid rgba(90,60,24,.55);padding-bottom:1.4%;margin-bottom:1.8%}
+.mhead .kick{font-family:"Space Mono",monospace;font-size:clamp(.42rem,.9vw,.66rem);letter-spacing:.4em;text-transform:uppercase;color:var(--ink2)}
+.mhead h1{font-family:"Fraunces",serif;font-weight:800;font-size:clamp(1.1rem,3.4vw,2.5rem);line-height:1;letter-spacing:.01em}
+.mhead h1 em{font-style:italic;font-weight:300;color:var(--blood)}
+.mhead .sp{flex:1}
+.mhead .meta{font-family:"Space Mono",monospace;font-size:clamp(.4rem,.85vw,.62rem);letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);text-align:right;line-height:1.9}
+.mhead .meta b{color:var(--blood)}
+/* corpo: mapa + paradas */
+.mbody{flex:1;display:grid;grid-template-columns:58% 1fr;gap:3%;min-height:0}
+.mapbox{position:relative;border:1.5px dashed rgba(90,60,24,.45);border-radius:4px;overflow:hidden}
+.mapbox svg{position:absolute;inset:0;width:100%;height:100%}
+.mapbox .rghost{stroke:rgba(90,60,24,.22)!important;stroke-dasharray:2 6}
+.mapbox .rpath{stroke:var(--blood)!important;stroke-width:2.6!important;stroke-dasharray:7 8!important;filter:none}
+.mapbox .pt circle{fill:var(--parch1)!important;stroke:var(--ink)!important;stroke-width:2!important}
+.mapbox .pt text{fill:var(--ink)!important;font-family:"Space Mono",monospace;font-weight:700;letter-spacing:.1em}
+.mapbox .xmark{font-family:"Fraunces",serif;font-weight:800;fill:var(--blood);font-size:34px}
+.compass{position:absolute;right:2.5%;top:3.5%;width:13%;opacity:.85}
+.mapbox .selo{position:absolute;left:3%;bottom:3%;font-family:"Space Mono",monospace;font-size:clamp(.4rem,.8vw,.6rem);letter-spacing:.24em;text-transform:uppercase;color:var(--ink2)}
+.mapbox .selo b{color:var(--blood)}
+/* paradas */
+.stopscol{display:flex;flex-direction:column;min-height:0}
+.stopscol h2{font-family:"Fraunces",serif;font-style:italic;font-weight:600;font-size:clamp(.8rem,1.7vw,1.3rem);color:var(--ink);margin-bottom:2.5%}
+.slist{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;min-height:0}
+.srow{display:flex;align-items:baseline;gap:3%;border-bottom:1px dotted rgba(90,60,24,.4);padding:1.2% 0}
+.srow:last-child{border-bottom:0}
+.srow .num{font-family:"Fraunces",serif;font-weight:800;color:var(--blood);font-size:clamp(.7rem,1.5vw,1.15rem);min-width:1.6em}
+.srow .nm{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(.66rem,1.4vw,1.05rem)}
+.srow .ds{margin-left:auto;font-family:"Space Mono",monospace;font-size:clamp(.4rem,.85vw,.62rem);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:right}
+/* locais importantes */
+.mfoot{margin-top:1.8%;border-top:1.5px solid rgba(90,60,24,.55);padding-top:1.4%}
+.mfoot .lbl{font-family:"Space Mono",monospace;font-size:clamp(.4rem,.8vw,.6rem);letter-spacing:.34em;text-transform:uppercase;color:var(--ink2);margin-bottom:1%}
+.chips{display:flex;flex-wrap:wrap;gap:.8%}
+.chips span{font-family:"Space Mono",monospace;font-size:clamp(.4rem,.82vw,.62rem);letter-spacing:.08em;color:var(--ink);border:1px solid rgba(90,60,24,.5);border-radius:3px;padding:.5% .9%;margin-bottom:.6%}
+.brandline{display:flex;justify-content:space-between;align-items:baseline;margin-top:1%;font-family:"Space Mono",monospace;font-size:clamp(.38rem,.78vw,.58rem);letter-spacing:.2em;text-transform:uppercase;color:var(--ink2)}
+.brandline b{color:var(--ink)}
+.hint{max-width:1120px;margin:14px auto 0;text-align:center;font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.18em;color:rgba(237,228,211,.4);text-transform:uppercase}
+@media print{
+  body{background:#fff}
+  .topbar,.hint{display:none}
+  .stagewrap{padding:0}
+  .parch{width:100%;box-shadow:none;border-radius:0}
+  @page{size:A4 landscape;margin:0}
+}
+@media(max-width:720px){
+  .parch{aspect-ratio:auto;min-height:140vw}
+  .mbody{grid-template-columns:1fr;grid-template-rows:52% 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span><b>PARTIU</b>MARROCOS · MAPA DO TESOURO</span>
+  <span class="sp"></span>
+  <button class="tbtn ghost" onclick="location.href='index.html#rota'">← voltar ao site</button>
+  <button class="tbtn ghost" onclick="window.print()">🖨 imprimir</button>
+  <button class="tbtn gold" id="btnPdf">⬇ Baixar PDF</button>
+</div>
+
+<div class="stagewrap"><div class="parch" id="parch">
+  <div class="border-frame"></div>
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="inner">
+    <div class="mhead">
+      <div>
+        <div class="kick" id="mKick">Mapa do tesouro · expedição</div>
+        <h1 id="mTitle">Marrocos <em>Essencial</em></h1>
+      </div>
+      <div class="sp"></div>
+      <div class="meta" id="mMeta"></div>
+    </div>
+    <div class="mbody">
+      <div class="mapbox" id="mapbox">
+        <svg class="compass" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#6E5228" stroke-width="2"/>
+          <circle cx="50" cy="50" r="30" fill="none" stroke="#6E5228" stroke-width="1" stroke-dasharray="3 4"/>
+          <path d="M50 8 L57 50 L50 44 L43 50 Z" fill="#8B2E1D"/>
+          <path d="M50 92 L43 50 L50 56 L57 50 Z" fill="#6E5228"/>
+          <path d="M8 50 L50 43 L44 50 L50 57 Z" fill="#6E5228"/>
+          <path d="M92 50 L50 57 L56 50 L50 43 Z" fill="#6E5228"/>
+          <text x="50" y="6" text-anchor="middle" font-family="Fraunces,serif" font-weight="800" font-size="13" fill="#4A3418">N</text>
+        </svg>
+        <div class="selo">Traçado por <b>Amazigh Turismo</b> · guiado por <b>PromoroccoTour</b></div>
+      </div>
+      <div class="stopscol">
+        <h2>As paradas da jornada</h2>
+        <div class="slist" id="slist"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <div class="lbl">Locais & momentos importantes da expedição</div>
+      <div class="chips" id="mChips"></div>
+      <div class="brandline">
+        <span id="mBrandL">www.partiumarrocos.com.br</span>
+        <span>ⵣ terra dos homens livres</span>
+        <span id="mBrandR">Amazigh Turismo · PromoroccoTour</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+<div class="hint">O PDF sai em A4 paisagem, pronto para imprimir ou enviar no WhatsApp</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/render.js"></script>
+<script>
+(function(){
+"use strict";
+function $(s){ return document.querySelector(s); }
+window.PM_READY.then(function(){
+  var D=window.PM_DATA;
+  var id=new URLSearchParams(location.search).get("p") || (D.pacotes[0]&&D.pacotes[0].id);
+  var pk=D.pacotes.find(function(p){ return p.id===id; }) || D.pacotes[0];
+  if(!pk){ document.body.innerHTML="<p style='padding:40px;font-family:monospace'>Nenhum pacote encontrado.</p>"; return; }
+  document.title="Mapa do Tesouro · "+pk.nome+" · Partiu Marrocos";
+  /* título: última palavra em itálico vermelho */
+  var parts=pk.nome.split(" ");
+  var last=parts.pop();
+  $("#mTitle").innerHTML=(parts.join(" ")+" <em>"+last+"</em>").trim();
+  $("#mKick").textContent="Mapa do tesouro · expedição "+(pk.cat||"").toLowerCase();
+  $("#mMeta").innerHTML=pk.emoji+" "+pk.dias+" dias · "+pk.noites+" noites<br><b>"+pk.rota.km+" km</b> de jornada";
+  /* rota no estilo tinta: gera e injeta */
+  var svg=window.PM_genRoute(pk.rota.stops);
+  $("#mapbox").insertAdjacentHTML("afterbegin",svg);
+  var sv=$("#mapbox svg:not(.compass)");
+  /* X marca o tesouro: no último ponto */
+  var pts=sv.querySelectorAll(".pt circle");
+  if(pts.length){
+    var lastC=pts[pts.length-1];
+    var x=parseFloat(lastC.getAttribute("cx")), y=parseFloat(lastC.getAttribute("cy"));
+    var t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",x); t.setAttribute("y",y+12); t.setAttribute("text-anchor","middle");
+    t.setAttribute("class","xmark"); t.textContent="✕";
+    sv.appendChild(t);
+    lastC.setAttribute("r","11"); lastC.style.fill="transparent";
+  }
+  /* garante rota totalmente desenhada (sem animação de scroll aqui) */
+  var rp=sv.querySelector(".rpath"); if(rp){ rp.style.strokeDasharray="7 8"; rp.style.strokeDashoffset="0"; }
+  sv.querySelectorAll(".pt").forEach(function(p){ p.classList.add("lit"); });
+  /* paradas numeradas */
+  var sl=$("#slist");
+  pk.rota.stops.forEach(function(s,i){
+    var r=document.createElement("div"); r.className="srow";
+    r.innerHTML='<span class="num">'+(i+1<10?"0":"")+(i+1)+'</span><span class="nm">'+s.n+'</span><span class="ds">'+(s.s||"")+'</span>';
+    sl.appendChild(r);
+  });
+  /* locais importantes: chips únicos do roteiro dia a dia */
+  var seen={}, chips=[];
+  (pk.roteiro||[]).forEach(function(d){ (d.chips||[]).forEach(function(c){ if(!seen[c]){ seen[c]=1; chips.push(c);} }); });
+  $("#mChips").innerHTML=chips.slice(0,18).map(function(c){ return "<span>"+c+"</span>"; }).join("");
+  $("#mBrandL").textContent=(D.config.site||"www.partiumarrocos.com.br").replace(/^https?:\/\//,"");
+  $("#mBrandR").textContent=(D.config.owner||"Amazigh Turismo")+" · "+(D.config.operator||"PromoroccoTour");
+  document.querySelector(".selo").innerHTML="Traçado por <b>"+(D.config.owner||"Amazigh Turismo")+"</b> · guiado por <b>"+(D.config.operator||"PromoroccoTour")+"</b>";
+});
+/* PDF */
+document.getElementById("btnPdf").addEventListener("click",function(){
+  var btn=this; btn.textContent="GERANDO...";
+  var node=document.getElementById("parch");
+  if(!window.html2canvas || !window.jspdf){ window.print(); btn.textContent="⬇ BAIXAR PDF"; return; }
+  html2canvas(node,{scale:2,useCORS:true,backgroundColor:null}).then(function(cv){
+    var pdf=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    var W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight();
+    pdf.addImage(cv.toDataURL("image/jpeg",.92),"JPEG",0,0,W,H);
+    var nome=(document.title.match(/· (.+?) ·/)||[,"mapa"])[1].toLowerCase().replace(/\s+/g,"-");
+    pdf.save("mapa-do-tesouro-"+nome+".pdf");
+    btn.textContent="⬇ BAIXAR PDF";
+  }).catch(function(){ window.print(); btn.textContent="⬇ BAIXAR PDF"; });
+});
+})();
+</script>
+</body>
+</html>

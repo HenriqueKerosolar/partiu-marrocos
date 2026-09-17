@@ -1,0 +1,23 @@
+{
+  "name": "partiumarrocos",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@8.15.9",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:integration": "pnpm --filter db test:integration",
+    "db:migrate": "pnpm --filter db migrate:dev",
+    "db:seed": "pnpm --filter db seed",
+    "db:local:start": "node scripts/local-postgres.mjs start",
+    "db:local:stop": "node scripts/local-postgres.mjs stop"
+  },
+  "devDependencies": {
+    "embedded-postgres": "^16.14.0-beta.17"
+  }
+}

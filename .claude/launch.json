@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "web", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "site-original",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "site-original/partiumarrocos.com.br", "-l", "4321"],
+      "port": 4321
+    }
+  ]
+}
