@@ -14,7 +14,7 @@ export function PublicNav() {
         </div>
         <nav className="pm-headnav" aria-label="Site público">
           <Link className="pm-headlink" href="/">Site público</Link>
-          <Link className="pm-headlink" href="#reservar">Falar com a equipe</Link>
+          <Link className="pm-headlink" href="/#reservar">Falar com a equipe</Link>
         </nav>
         <select id="pm-language" className="pm-lang" aria-label="Idiomas" defaultValue="0">
           <option value="0">PT</option>
@@ -24,10 +24,10 @@ export function PublicNav() {
         </select>
       </header>
       <nav className="p7-site-nav" aria-label="Explorar o Marrocos">
-        <Link className="pm-btn" href="#roteiros">Roteiros</Link>
+        <Link className="pm-btn" href="/#roteiros">Roteiros</Link>
         <Link className="pm-btn" href="/universo-amazigh">Universo amazigh</Link>
         <Link className="pm-btn" href="/sabores-do-marrocos">Sabores do Marrocos</Link>
-        <Link className="pm-btn pm-primary" href="#reservar">Comprar pacote</Link>
+        <Link className="pm-btn pm-primary" href="/#reservar">Comprar pacote</Link>
       </nav>
     </>
   );

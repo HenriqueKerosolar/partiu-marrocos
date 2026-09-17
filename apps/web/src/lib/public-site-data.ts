@@ -70,19 +70,36 @@ export const amazighHero = {
   imgCaption: "Erg Chebbi · Merzouga",
 };
 
+// Fontes reais citadas pelo mockup (P7_SOURCES em mockup-v11-source.html)
+// — pesquisa acadêmica/institucional de verdade, não texto de preenchimento.
+export const fontes = {
+  nomads: { name: "Yasmine Zarhloule & Ella Williams · Carnegie, 2025", url: "https://carnegieendowment.org/research/2025/10/between-marginalization-and-climate-change-the-resilience-of-moroccos-ait-khabbash" },
+  arts: { name: "Cynthia Becker · Tamazgha Studies Journal, 2023", url: "https://www.tamazghastudiesjournal.org/articles-fall2023-issue-01-article08" },
+  roots: { name: "Carnegie · Parallel Climate Reckonings, 2026", url: "https://carnegieendowment.org/research/2026/06/morocco-california-colonial-water-legacies-indigenous-practices-drought-climate-change-adaptation" },
+  water: { name: "Carnegie · Beyond the Green Transition, 2025", url: "https://carnegieendowment.org/research/2025/03/beyond-the-green-transition-governance-and-climate-vulnerability-in-morocco" },
+  script: { name: "IRCAM · Tifinaghe", url: "https://www.ircam.ma/fr/node/235" },
+  letters: { name: "IRCAM · Tifinaghe : de la stèle au logiciel", url: "https://www.ircam.ma/fr/actualites/tifinaghe-de-la-stele-au-logiciel" },
+  couscous: { name: "UNESCO · Couscous, 2020", url: "https://ich.unesco.org/en/RL/knowledge-know-how-and-practices-pertaining-to-the-production-and-consumption-of-couscous-01602" },
+  mediterranean: { name: "UNESCO · Mediterranean diet, 2013", url: "https://ich.unesco.org/en/lists?RL=00884" },
+  food: { name: "Office National Marocain du Tourisme · Food & drinks", url: "https://www.visitmorocco.com/en/travel-info/food-drinks" },
+  heritage: { name: "Office National Marocain du Tourisme · Gastronomy", url: "https://www.visitmorocco.com/en/discover-morocco/gastronomy" },
+  nutrition: { name: "OMS / WHO · Healthy diet, 2026", url: "https://www.who.int/news-room/fact-sheets/detail/healthy-diet" },
+};
+
 export const amazighDestaque = {
   numero: "01",
   tag: "Vidas do deserto",
   titulo: "Merzouga, entre dunas e mudanças",
   texto:
     "Os Aït Khabbash têm raízes no pastoreio nômade. Água e pastagens orientavam seus deslocamentos. Fronteiras e secas transformaram essa mobilidade. Muitas famílias passaram a viver em Merzouga e Hassilabied; algumas combinam pastoreio, moradia fixa e turismo.",
+  fontes: [fontes.nomads],
 };
 
 export const amazighHistorias = [
-  { numero: "02", tag: "Aït Atta · Aït Khabbash", titulo: "Povos, tribos e pertencimento", texto: "Os vínculos que atravessam gerações." },
-  { numero: "03", tag: "Tamazgha", titulo: "Raízes amazigh, presença viva", texto: "Uma história que continua." },
-  { numero: "04", tag: "Oásis", titulo: "O conhecimento da água", texto: "Ler a paisagem é parte da história." },
-  { numero: "05", tag: "Tifinagh", titulo: "As letras que você encontra pelo caminho", texto: "Língua, escrita e pertencimento." },
+  { numero: "02", tag: "Aït Atta · Aït Khabbash", titulo: "Povos, tribos e pertencimento", texto: "Os vínculos que atravessam gerações.", fontes: [fontes.arts] },
+  { numero: "03", tag: "Tamazgha", titulo: "Raízes amazigh, presença viva", texto: "Uma história que continua.", fontes: [fontes.roots] },
+  { numero: "04", tag: "Oásis", titulo: "O conhecimento da água", texto: "Ler a paisagem é parte da história.", fontes: [fontes.water] },
+  { numero: "05", tag: "Tifinagh", titulo: "As letras que você encontra pelo caminho", texto: "Língua, escrita e pertencimento.", fontes: [fontes.script, fontes.letters] },
 ];
 
 // "Sabores do Marrocos" — idem, portado de P7_RECIPES/p7food().
@@ -100,6 +117,7 @@ export const saboresEditorial = {
   titulo: "Saberes compartilhados com o mundo.",
   texto:
     "Tradições amazigh, árabe-andaluzas e judaicas participam da diversidade da cozinha marroquina. Cada região e cada família acrescenta seu modo de preparar e servir.",
+  fontes: [fontes.heritage],
 };
 
 export const saboresHeranca = {
@@ -107,6 +125,7 @@ export const saboresHeranca = {
   titulo: "Os saberes do cuscuz",
   texto:
     "Reconhecidos pela UNESCO em candidatura conjunta de Argélia, Mauritânia, Marrocos e Tunísia. O patrimônio reúne preparo, transmissão de conhecimentos e partilha da refeição.",
+  fontes: [fontes.couscous],
 };
 
 export const saboresBalanceado = {
@@ -114,6 +133,7 @@ export const saboresBalanceado = {
   titulo: "O cuidado começa nos ingredientes.",
   texto:
     "Legumes, leguminosas e cereais integrais podem compor refeições variadas e nutritivas. O equilíbrio também depende das porções e das quantidades de sal, açúcar e gorduras usadas no preparo.",
+  fontes: [fontes.nutrition],
 };
 
 export const receitas = [

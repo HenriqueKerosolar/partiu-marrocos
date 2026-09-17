@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { PublicNav } from "../components/public-nav";
 import { Footer } from "../components/footer";
-import { receitas, saboresBalanceado, saboresEditorial, saboresHeranca, saboresHero } from "@/lib/public-site-data";
+import { fontes, receitas, saboresBalanceado, saboresEditorial, saboresHeranca, saboresHero } from "@/lib/public-site-data";
+import { Sources } from "../components/sources";
 
 export const metadata: Metadata = { title: "Sabores do Marrocos · Partiu Marrocos" };
 
@@ -32,11 +33,13 @@ export default function SaboresDoMarrocosPage() {
             <div className="pm-eyebrow">{saboresEditorial.kicker.toUpperCase()}</div>
             <h2>{saboresEditorial.titulo}</h2>
             <p>{saboresEditorial.texto}</p>
+            <Sources items={saboresEditorial.fontes} />
           </div>
           <div className="p7-heritage-note">
             <span className="p7-year">{saboresHeranca.ano}</span>
             <h3>{saboresHeranca.titulo}</h3>
             <p>{saboresHeranca.texto}</p>
+            <Sources items={saboresHeranca.fontes} />
           </div>
         </section>
 
@@ -44,6 +47,7 @@ export default function SaboresDoMarrocosPage() {
           <div className="pm-eyebrow">{saboresBalanceado.kicker.toUpperCase()}</div>
           <h2>{saboresBalanceado.titulo}</h2>
           <p>{saboresBalanceado.texto}</p>
+          <Sources items={saboresBalanceado.fontes} />
         </section>
 
         <div className="p7-section-title">
@@ -73,11 +77,13 @@ export default function SaboresDoMarrocosPage() {
             A harira é uma sopa marroquina associada às refeições do Ramadã. Há muitas versões, com leguminosas,
             tomate, massa e farinha.
           </p>
+          <Sources items={[fontes.food]} />
           <h3>Marrocos e a dieta mediterrânea</h3>
           <p>
             O Marrocos integra o reconhecimento cultural da dieta mediterrânea pela UNESCO. Esse patrimônio inclui
             saberes, rituais, cultivo e o hábito de comer juntos.
           </p>
+          <Sources items={[fontes.mediterranean]} />
         </details>
       </div>
       <Footer />

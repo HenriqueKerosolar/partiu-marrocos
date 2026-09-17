@@ -38,6 +38,7 @@ export default function UniversoAmazighPage() {
           </div>
           <div>
             <p>{amazighDestaque.texto}</p>
+            <a className="pm-btn" href="/#reservar">Abrir história</a>
           </div>
         </section>
 
@@ -52,6 +53,7 @@ export default function UniversoAmazighPage() {
               <div className="pm-eyebrow">{h.tag}</div>
               <h3>{h.titulo}</h3>
               <p>{h.texto}</p>
+              <a className="pm-btn" href="/#reservar">Ler história</a>
             </article>
           ))}
         </div>
