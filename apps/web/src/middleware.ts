@@ -22,6 +22,15 @@ import { SESSION_COOKIE } from "./lib/session-constants";
 // mesmo modelo de "link de cartão de embarque" de uma companhia aérea.
 const PUBLIC_PATHS = ["/login", "/minha-viagem"];
 
+// Site público (site-original/partiumarrocos.com.br) via Vercel Multi Zones:
+// next.config.mjs reescreve essas rotas para o deployment estático separado,
+// mas essa reescrita só roda DEPOIS deste middleware — sem essa lista, um
+// visitante anônimo em "/" ou "/img/logo.png" era redirecionado pra /login
+// antes da reescrita ter qualquer chance de servir o site (achado real, só
+// apareceu testando sem cookie de sessão — ver nota do achado de
+// /api/health mais abaixo, mesmo padrão de mascaramento).
+const PUBLIC_SITE_PATH_PREFIXES = ["/mapa", "/css/", "/js/", "/img/", "/cinema/"];
+
 // Rotas verdadeiramente públicas por design (ex.: apps/web/src/app/api/
 // public/leads/route.ts — captura de lead do site público, sem sessão,
 // chamada de outro domínio). Achado real: até esta correção, o middleware
@@ -45,7 +54,9 @@ const PUBLIC_API_PATH_PREFIXES = ["/api/public/", "/api/health", "/api/webhooks/
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (
+    pathname === "/" ||
     PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    PUBLIC_SITE_PATH_PREFIXES.some((p) => pathname.startsWith(p)) ||
     pathname.startsWith("/api/auth/login") ||
     PUBLIC_API_PATH_PREFIXES.some((p) => pathname.startsWith(p))
   ) {
