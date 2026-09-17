@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 const NAV_LINKS = [
   { href: "#roteiros", label: "Roteiros" },
@@ -11,7 +10,7 @@ const NAV_LINKS = [
 export function PublicNav() {
   return (
     <header className="sticky top-0 z-30">
-      <div className="flex items-center justify-between gap-4 bg-[#EDE4D3] px-6 py-3 text-[#0D2140] sm:px-10">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#EDE4D3] px-6 py-3 text-[#0D2140] sm:px-10">
         <div className="flex items-center gap-3">
           <Image src="/img/logo.png" alt="Partiu Marrocos" width={44} height={44} className="h-11 w-11 object-contain" />
           <div className="leading-tight">
@@ -19,12 +18,10 @@ export function PublicNav() {
             <div className="font-[family-name:var(--font-fraunces)] text-lg italic text-[#D24E1C]">por inteiro.</div>
           </div>
         </div>
-        <Link
-          href="/login"
-          className="rounded-full bg-[#F2A93B] px-5 py-2 text-sm font-semibold text-[#0D2140] transition hover:bg-[#F8C972]"
-        >
-          Entrar
-        </Link>
+        <div className="flex items-center gap-5 text-sm">
+          <a href="#reservar" className="hover:underline">Site público</a>
+          <a href="#reservar" className="hover:underline">Falar com a equipe</a>
+        </div>
       </div>
       <nav className="flex flex-wrap items-center gap-6 bg-[#0D2140] px-6 py-3 text-sm text-[#EDE4D3]/80 sm:px-10">
         {NAV_LINKS.map((link) => (

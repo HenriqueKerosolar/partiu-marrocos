@@ -1,4 +1,5 @@
 import { PublicNav } from "./components/public-nav";
+import { PropostaBanner } from "./components/proposta-banner";
 import { Hero } from "./components/hero";
 import { Highlights } from "./components/highlights";
 import { Roteiros } from "./components/roteiros";
@@ -12,6 +13,7 @@ export default function PublicHomePage() {
     <>
       <PublicNav />
       <main>
+        <PropostaBanner />
         <Hero />
         <Highlights />
         <Roteiros />
