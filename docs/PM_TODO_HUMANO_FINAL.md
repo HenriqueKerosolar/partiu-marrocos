@@ -1,6 +1,8 @@
 # Partiu Marrocos — TODO Humano Final
 
-Só itens que dependem de decisão/credencial/aprovação externa — nada aqui é corrigível por código. Consolida achados de PM-CONV-07 a PM-CONV-12.
+Só itens que dependem de decisão/credencial/aprovação externa — nada aqui é corrigível por código. Consolida achados de PM-CONV-07 a PM-CONV-12 e PM-PRE-GOLIVE-MASTER-01.
+
+**Atualizado no PM-PRE-GOLIVE-MASTER-01 (2026-09-17):** os itens "rate limiter distribuído" e "git init" da versão anterior deste documento foram **resolvidos por código nesta rodada** (rate limiter atômico em Postgres implementado e testado sob concorrência real; `git init` local feito, primeiro commit registrado) — removidos da lista abaixo.
 
 ---
 
@@ -55,24 +57,25 @@ Só itens que dependem de decisão/credencial/aprovação externa — nada aqui 
 
 ---
 
-## 6. Rate limiter distribuído (multi-instância Vercel)
-
-**AÇÃO:** decidir entre (a) implementar um contador atômico em Postgres (sem credencial nova, mas exige uma rodada própria de stress-test, mesmo rigor do Job Engine §5E) ou (b) adotar Redis/Upstash (credencial nova).
-**MOTIVO:** o rate limiter atual (`apps/web/src/lib/rate-limit.ts`) é em memória, por instância — funciona corretamente hoje (single-instance dev), mas sob múltiplas instâncias Vercel cada uma teria seu próprio contador.
-**PRIORIDADE:** média — nenhuma rota protegida por ele é hoje um alvo de abuso conhecido; vale endereçar antes de tráfego real de produção em escala.
-
----
-
-## 7. Backup/DR — teste real de restore
+## 6. Backup/DR — teste real de restore
 
 **AÇÃO:** rodar o runbook (`docs/PM_BACKUP_RESTORE_DR.md`) num ambiente com `pg_dump`/`pg_restore` instalados (esta máquina de dev não tem — usa `embedded-postgres`, que não empacota essas ferramentas), confirmando o checklist de verificação pós-restore.
-**MOTIVO:** o runbook usa comandos padrão PostgreSQL corretos, mas nunca foi executado ponta a ponta nesta sessão — declarado honestamente, não escondido.
+**MOTIVO:** o runbook usa comandos padrão PostgreSQL corretos, mas nunca foi executado ponta a ponta nesta sessão — declarado honestamente, não escondido. Reconfirmado no PM-PRE-GOLIVE-MASTER-01: `pg_dump`/`pg_restore` seguem ausentes desta máquina.
 **PRIORIDADE:** alta antes de depender dele para um incidente real — validar também se o provider escolhido (item 3) já resolve isso via PITR nativo, o que tornaria este runbook um plano B, não a linha primária.
 
 ---
 
-## 8. Git — repositório ainda não inicializado
+## 7. Worker do Job Engine em produção — host separado (Vercel é serverless)
 
-**AÇÃO:** decidir se/quando rodar `git init` neste projeto.
-**MOTIVO:** decisão de infraestrutura registrada desde o PM-CONV-04, ainda pendente — não bloqueia nenhum trabalho técnico até aqui, mas impede versionamento/rollback real e complica qualquer deploy via CI baseado em Git (incluindo Vercel, que normalmente conecta a um repositório).
-**PRIORIDADE:** alta se o deploy real (Vercel) for acontecer em breve — Vercel tipicamente precisa de um repositório Git conectado.
+**AÇÃO:** provisionar um host always-on (ex.: Railway/Render/Fly.io/VM pequena) para rodar `pnpm --filter web worker` continuamente ao lado do deploy Vercel, OU decidir reestruturar para Vercel Cron (mudança de código maior, ver `docs/PM_DEPLOY_READINESS.md` §11).
+**MOTIVO:** `apps/web/src/scripts/job-worker.ts` é um poller de longa duração (loop contínuo) — estruturalmente incompatível com Vercel Functions (efêmeras, com timeout). Sem esse processo rodando em produção, nenhuma mensagem de WhatsApp enfileirada é de fato enviada (o webhook só enfileira).
+**ONDE:** detalhado em `docs/PM_DEPLOY_READINESS.md`, seção "Cron / jobs em background".
+**PRIORIDADE:** alta — bloqueia o funcionamento real do WhatsApp em produção, mesmo que o resto do app funcione normalmente na Vercel.
+
+---
+
+## 8. Provider de Postgres — Root Directory do projeto na Vercel
+
+**AÇÃO:** ao criar o projeto na Vercel, configurar "Root Directory" = `apps/web` com "Include files outside the root directory" habilitado (monorepo pnpm — `apps/web` depende de `packages/db` via workspace), e o build command apontando para `pnpm --filter web run build`.
+**MOTIVO:** configuração de infraestrutura que só pode ser feita no dashboard da Vercel no momento da criação do projeto — não é algo que o código resolva sozinho.
+**PRIORIDADE:** alta — necessário para o primeiro deploy funcionar.

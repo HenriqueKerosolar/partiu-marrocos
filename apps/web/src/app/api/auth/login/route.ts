@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   // Rate limit por IP — mesma proteção do fabricaease, ausente no KeroSolar
   // CRM (achado da auditoria de reaproveitamento) e por isso aplicada aqui
   // desde o início.
-  const { allowed, retryAfterSeconds } = rateLimit(`login:${getClientIp(request)}`, 10, 5 * 60_000);
+  const { allowed, retryAfterSeconds } = await rateLimit(`login:${getClientIp(request)}`, 10, 5 * 60_000);
   if (!allowed) {
     return NextResponse.json(
       { error: "Muitas tentativas. Tente novamente em alguns minutos." },

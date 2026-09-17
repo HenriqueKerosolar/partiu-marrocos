@@ -873,6 +873,24 @@ model WorkerHeartbeat {
   @@map("worker_heartbeats")
 }
 
+// PM-PRE-GOLIVE-MASTER-01, §9 — rate limiter atômico em Postgres,
+// multi-instância-safe (substitui o Map em memória de
+// `apps/web/src/lib/rate-limit.ts`, que só funcionava corretamente numa
+// única instância — sob Vercel serverless, cada instância teria seu
+// próprio contador). Sem RLS de propósito: `key` é uma string opaca que o
+// CHAMADOR compõe (ex.: "login:203.0.113.5"), nunca dado de negócio de um
+// tenant — mesmo tratamento de `worker_heartbeats`/`sessions`.
+model RateLimitBucket {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @map("window_start")
+  windowMs    Int      @map("window_ms")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([windowStart])
+  @@map("rate_limit_buckets")
+}
+
 // ---------------------------------------------------------------------------
 // CRM — domínio novo do Partiu Marrocos. Inspirado na forma do schema do
 // KeroSolar CRM (Lead/Pipeline/Stage/Conversation/Message), mas com tenantId

@@ -53,7 +53,7 @@ export function OPTIONS() {
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  const rl = rateLimit(`public-leads:${ip}`, 10, 10 * 60_000);
+  const rl = await rateLimit(`public-leads:${ip}`, 10, 10 * 60_000);
   if (!rl.allowed) {
     return cors(NextResponse.json({ error: "Muitas tentativas, aguarde um pouco." }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }));
   }

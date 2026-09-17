@@ -38,3 +38,4 @@ export * from "./ocorrencia";
 export * from "./notifications";
 export * from "./money";
 export * from "./post-trip";
+export * from "./rate-limit";

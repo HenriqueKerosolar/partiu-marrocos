@@ -1,43 +1,15 @@
-// Limitador simples em memória, por instância — protege contra força bruta
-// em login sem precisar de infraestrutura extra. Em produção com múltiplas
-// instâncias, trocar o Map por um store compartilhado (Redis) atrás da mesma
-// função `rateLimit`. Porte do fabricaease.
-type Bucket = { count: number; resetAt: number };
+// PM-PRE-GOLIVE-MASTER-01, §9 — achado real de auditoria (PM-CONV-11):
+// o limitador em memória (Map por processo) não é seguro sob múltiplas
+// instâncias Vercel — cada instância tinha seu próprio contador,
+// tornando o limite "por IP" na prática só "por IP por instância".
+// Substituído pelo limitador atômico em Postgres
+// (`packages/db/src/rate-limit.ts::verificarLimiteTaxa`, testado com
+// concorrência real — ver `pm-pre-golive-rate-limit.test.ts`) — nunca
+// depende de estado local, funciona igual com 1 ou N instâncias.
+import { prisma, verificarLimiteTaxa, type ResultadoLimiteTaxa } from "@partiumarrocos/db";
 
-const buckets = new Map<string, Bucket>();
-
-// Varre buckets expirados periodicamente para não crescer sem limite.
-// unref() evita que isso prenda o processo vivo (ex.: em scripts/testes).
-const sweepInterval = setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, bucket] of buckets) {
-      if (bucket.resetAt <= now) buckets.delete(key);
-    }
-  },
-  5 * 60_000,
-);
-sweepInterval.unref?.();
-
-export function rateLimit(
-  key: string,
-  limit: number,
-  windowMs: number,
-): { allowed: boolean; retryAfterSeconds?: number } {
-  const now = Date.now();
-  const bucket = buckets.get(key);
-
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true };
-  }
-
-  if (bucket.count >= limit) {
-    return { allowed: false, retryAfterSeconds: Math.ceil((bucket.resetAt - now) / 1000) };
-  }
-
-  bucket.count += 1;
-  return { allowed: true };
+export async function rateLimit(key: string, limit: number, windowMs: number): Promise<ResultadoLimiteTaxa> {
+  return verificarLimiteTaxa(prisma, key, limit, windowMs);
 }
 
 export function getClientIp(req: Request): string {

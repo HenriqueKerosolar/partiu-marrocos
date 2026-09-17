@@ -26,7 +26,7 @@ const MOTIVOS: Record<string, string> = {
  */
 export async function obterMinhaViagemAction(token: string): Promise<{ ok?: boolean; error?: string; contexto?: ContextoPassageiro }> {
   const ip = await getClientIpFromRequestHeaders();
-  const rl = rateLimit(`minha-viagem:${ip}`, 20, 5 * 60_000);
+  const rl = await rateLimit(`minha-viagem:${ip}`, 20, 5 * 60_000);
   if (!rl.allowed) return { error: "Muitas tentativas — aguarde alguns minutos e tente novamente." };
 
   const r = await obterContextoPassageiro(prisma, token.trim());
@@ -37,7 +37,7 @@ export async function obterMinhaViagemAction(token: string): Promise<{ ok?: bool
 /** PM-CONV-10 — mesmo token do cartão de embarque, mesma revalidação a cada chamada; nunca aceita um bookingId do cliente. */
 export async function registrarAvaliacaoAction(token: string, nota: number, comentario: string, depoimentoAutorizado: boolean): Promise<{ ok?: boolean; error?: string }> {
   const ip = await getClientIpFromRequestHeaders();
-  const rl = rateLimit(`minha-viagem-avaliar:${ip}`, 10, 5 * 60_000);
+  const rl = await rateLimit(`minha-viagem-avaliar:${ip}`, 10, 5 * 60_000);
   if (!rl.allowed) return { error: "Muitas tentativas — aguarde alguns minutos e tente novamente." };
 
   const r = await registrarAvaliacaoPassageiro(prisma, token.trim(), { nota, comentario: comentario.trim() || null, depoimentoAutorizado });
