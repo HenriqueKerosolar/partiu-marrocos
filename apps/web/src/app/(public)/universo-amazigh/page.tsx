@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Universo amazigh · Partiu Marrocos"
 export default function UniversoAmazighPage() {
   return (
     <>
-      <PublicNav active="amazigh" />
+      <PublicNav active="amazigh" onHome={false} />
       <div className="public-editorial editorial-inner" data-public-landing>
         <h1 className="editorial-page-title">Universo amazigh</h1>
         <AmazighScene />
