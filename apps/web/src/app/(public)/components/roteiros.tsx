@@ -1,50 +1,40 @@
-import Image from "next/image";
-import { parceiroLocal, roteiros } from "@/lib/public-site-data";
+import { roteiros } from "@/lib/public-site-data";
 
 export function Roteiros() {
   return (
-    <section id="roteiros" className="mx-auto max-w-5xl px-6 py-10 sm:px-10">
-      <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-semibold sm:text-3xl">Escolha sua próxima história.</h2>
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
-        {roteiros.map((roteiro) => (
-          <article key={roteiro.id} className="overflow-hidden rounded-2xl border border-[#EDE4D3]/15 bg-[#0A0F1C]">
-            <div className="relative h-40 w-full">
-              <Image src={roteiro.img} alt={roteiro.nome} fill className="object-cover" />
-            </div>
-            <div className="p-5">
-              <p className="text-xs uppercase tracking-wide text-[#EDE4D3]/60">
-                {roteiro.dias} · {roteiro.noites}
-              </p>
-              <h3 className="mt-1 font-[family-name:var(--font-fraunces)] text-xl font-semibold">{roteiro.nome}</h3>
-              <p className="mt-2 text-xs text-[#EDE4D3]/65">{roteiro.stops.join(" → ")}</p>
-              <div className="mt-4 flex items-center justify-between">
-                <a href={`#roteiro-${roteiro.id}`} className="text-sm font-semibold text-[#F2A93B] hover:underline">
-                  Roteiro completo →
-                </a>
-                <a href="#reservar" className="rounded-full bg-[#F2A93B] px-4 py-2 text-xs font-semibold text-[#0D2140] transition hover:bg-[#F8C972]">
-                  Quero esse roteiro
-                </a>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-[#F2A93B]/20 bg-[#0D2140] p-5">
-        <div className="flex items-center gap-4">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
-            <Image src={parceiroLocal.img} alt={parceiroLocal.t} fill className="object-cover" />
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wide text-[#F2A93B]">Publicidade · Parceiro local</p>
-            <p className="font-semibold text-[#EDE4D3]">{parceiroLocal.t}</p>
-            <p className="text-xs text-[#EDE4D3]/65">{parceiroLocal.d}</p>
-          </div>
+    <>
+      <section id="roteiros">
+        <div className="pm-section-head">
+          <h2>Escolha sua próxima história.</h2>
         </div>
-        <a href="#reservar" className="shrink-0 rounded-full border border-[#EDE4D3]/30 px-4 py-2 text-xs font-semibold text-[#EDE4D3] transition hover:border-[#EDE4D3]">
-          Conhecer →
-        </a>
-      </div>
-    </section>
+        <div className="pm-grid2">
+          {roteiros.map((r) => (
+            <article className="pm-panel pm-product" key={r.id}>
+              <img src={r.img} alt={r.nome} />
+              <div className="pm-pad">
+                <div className="pm-eyebrow">{r.dias} · {r.noites}</div>
+                <h2 style={{ margin: "10px 0" }}>{r.nome}</h2>
+                <p>{r.stops.join(" → ")}</p>
+                <div className="pm-row pm-between" style={{ marginTop: 15 }}>
+                  <a className="pm-link" href={`#roteiro-${r.id}`}>Roteiro completo →</a>
+                  <a className="pm-btn pm-primary" href="#reservar">Quero esse roteiro</a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="pm-section">
+        <div className="pm-ad">
+          <img src="/img/tea.jpg" alt="Chá de menta" />
+          <div>
+            <div className="pm-eyebrow">Publicidade · parceiro local</div>
+            <h3>Chá e sabores do Atlas</h3>
+            <p className="pm-small">Uma pausa com sabor de Marrocos.</p>
+          </div>
+          <a className="pm-btn" href="#reservar">Conhecer</a>
+        </div>
+      </section>
+    </>
   );
 }

@@ -73,4 +73,13 @@ describe("middleware — rotas públicas (sem sessão)", () => {
     const res = await middleware(req);
     expect(res.status).not.toBe(307);
   });
+
+  it.each(["/universo-amazigh", "/sabores-do-marrocos"])(
+    "GET %s (página do site público) passa sem sessão",
+    async (pathname) => {
+      const req = new NextRequest(`http://localhost${pathname}`, { method: "GET" });
+      const res = await middleware(req);
+      expect(res.status).not.toBe(307);
+    },
+  );
 });

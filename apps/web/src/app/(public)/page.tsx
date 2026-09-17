@@ -4,23 +4,23 @@ import { Hero } from "./components/hero";
 import { Highlights } from "./components/highlights";
 import { Roteiros } from "./components/roteiros";
 import { Accompaniment } from "./components/accompaniment";
-import { AmazighSabores } from "./components/amazigh-sabores";
-import { QuotesFaq } from "./components/quotes-faq";
+import { Teaser } from "./components/teaser";
 import { Footer } from "./components/footer";
 
 export default function PublicHomePage() {
   return (
     <>
       <PublicNav />
-      <main>
-        <PropostaBanner />
+      <PropostaBanner />
+      <div className="pm-site">
         <Hero />
         <Highlights />
         <Roteiros />
+      </div>
+      <section className="pm-site">
         <Accompaniment />
-        <AmazighSabores />
-        <QuotesFaq />
-      </main>
+      </section>
+      <Teaser />
       <Footer />
     </>
   );

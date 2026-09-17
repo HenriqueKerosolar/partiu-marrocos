@@ -1,24 +1,29 @@
 import type { Metadata } from "next";
-import { Fraunces, Outfit } from "next/font/google";
+import "./mockup.css";
 
 export const dynamic = "force-dynamic";
-
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Partiu Marrocos · Sua viagem, por inteiro",
   description: "Roteiros pelo Marrocos com curadoria brasileira: deserto, cidades imperiais e a cidade azul, do jeito que fica na memória.",
 };
 
-// Site público tem identidade visual própria (fundo escuro, âmbar, Fraunces/
-// Outfit) — separada da paleta neutra clara do painel interno autenticado
-// (globals.css). Escopar aqui em vez de mexer nos tokens globais evita
-// vazar esse tema pro resto do CRM.
+// mockup.css é o CSS exato extraído de proposta/mockup-v11-source.html
+// (achado real: a versão anterior desta home foi feita "parecida", por
+// aproximação em Tailwind, e divergia do mockup em vários pontos — imagem
+// errada, seletor de idioma faltando, "Universo amazigh"/"Sabores do
+// Marrocos" viraram abas quando no mockup são páginas próprias. Pedido
+// explícito do usuário: clone, não aproximação. As classes pm-*/p7-* e as
+// fontes (Google Fonts direto, não next/font, pra bater com os nomes de
+// família literais usados no CSS) são as mesmas do arquivo-fonte.
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${fraunces.variable} ${outfit.variable} bg-[#06080F] font-[family-name:var(--font-outfit)] text-[#EDE4D3] antialiased`}>
-      {children}
-    </div>
+    <>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500&family=Space+Mono&display=swap"
+        rel="stylesheet"
+      />
+      <div className="pm-public">{children}</div>
+    </>
   );
 }

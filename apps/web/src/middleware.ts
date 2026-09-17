@@ -20,7 +20,7 @@ import { SESSION_COOKIE } from "./lib/session-constants";
 // (o passageiro não é um `User`). Segurança vem do token em si (hash
 // SHA-256 comparado no banco, RLS por tenant), não deste middleware —
 // mesmo modelo de "link de cartão de embarque" de uma companhia aérea.
-const PUBLIC_PATHS = ["/login", "/minha-viagem"];
+const PUBLIC_PATHS = ["/login", "/minha-viagem", "/universo-amazigh", "/sabores-do-marrocos"];
 
 // Fotos do site público servidas como estático de public/img/*.jpg — o
 // matcher abaixo cobre qualquer request (não só páginas), então sem essa

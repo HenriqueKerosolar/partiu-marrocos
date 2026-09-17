@@ -37,7 +37,7 @@ export const roteiros: Roteiro[] = [
     noites: "2 noites",
     nome: "Deserto e kasbahs",
     stops: ["Marrakech", "Dades", "Merzouga", "Marrakech"],
-    img: "/img/dunes.jpg",
+    img: "/img/merzouga.jpg",
   },
   {
     id: "saara-cidade-azul",
@@ -56,48 +56,92 @@ export const parceiroLocal = {
   img: "/img/tea.jpg",
 };
 
-// "Universo amazigh" — aba com história em destaque + histórias expansíveis
-// (o mockup tem 5; mantemos as mais fortes pra não inflar a página).
-export const amazigh = {
+// "Universo amazigh" — conteúdo portado literalmente de P7_ARTICLES em
+// proposta/mockup-v11-source.html (a fonte real do mockup, não uma
+// aproximação). merzouga é o destaque; as outras 4 formam o grid de
+// histórias — no mockup são páginas de leitura próprias (não construídas
+// ainda aqui); os botões "Ler história" ficam como placeholder até lá.
+export const amazighHero = {
   kicker: "Universo amazigh · Marrocos",
   titulo: "Amazigh.",
   tituloItalico: "Histórias que seguem vivas.",
   subtitle: "De Merzouga aos caminhos do Atlas: histórias, palavras e saberes para conhecer com tempo e atenção.",
-  img: "/img/dunes.jpg",
+  img: "/img/saharasunset.jpg",
   imgCaption: "Erg Chebbi · Merzouga",
-  destaque: {
-    numero: "01",
-    tag: "Vidas do deserto",
-    titulo: "Merzouga, entre dunas e mudanças",
-    texto: "Os Aït Khabbash têm raízes no pastoreio nômade. Água e pastagens orientavam seus deslocamentos. Fronteiras e secas transformaram essa mobilidade. Muitas famílias passaram a viver em Merzouga e Hassilabied; algumas combinam pastoreio, moradia fixa e turismo.",
-  },
-  historias: [
-    { numero: "02", tag: "Aït Atta · Aït Khabbash", titulo: "Povos, tribos e pertencimento", d: "Os vínculos que atravessam gerações." },
-    { numero: "03", tag: "Tamazgha", titulo: "Raízes amazigh, presença viva", d: "Uma história que continua." },
-    { numero: "04", tag: "Dasir", titulo: "O conhecimento da água", d: "Ler a paisagem é parte da história." },
-  ],
 };
 
-// "Sabores do Marrocos" — mesma estrutura de aba do mockup (editorial +
-// receitas pra cozinhar em casa), não mais o grid simples de pratos.
-export const sabores = {
+export const amazighDestaque = {
+  numero: "01",
+  tag: "Vidas do deserto",
+  titulo: "Merzouga, entre dunas e mudanças",
+  texto:
+    "Os Aït Khabbash têm raízes no pastoreio nômade. Água e pastagens orientavam seus deslocamentos. Fronteiras e secas transformaram essa mobilidade. Muitas famílias passaram a viver em Merzouga e Hassilabied; algumas combinam pastoreio, moradia fixa e turismo.",
+};
+
+export const amazighHistorias = [
+  { numero: "02", tag: "Aït Atta · Aït Khabbash", titulo: "Povos, tribos e pertencimento", texto: "Os vínculos que atravessam gerações." },
+  { numero: "03", tag: "Tamazgha", titulo: "Raízes amazigh, presença viva", texto: "Uma história que continua." },
+  { numero: "04", tag: "Oásis", titulo: "O conhecimento da água", texto: "Ler a paisagem é parte da história." },
+  { numero: "05", tag: "Tifinagh", titulo: "As letras que você encontra pelo caminho", texto: "Língua, escrita e pertencimento." },
+];
+
+// "Sabores do Marrocos" — idem, portado de P7_RECIPES/p7food().
+export const saboresHero = {
   kicker: "Sabores do Marrocos",
   titulo: "O Marrocos",
   tituloItalico: "também se conhece à mesa.",
   subtitle: "Especiarias, receitas e o prazer de compartilhar. Um convite para provar durante a viagem e cozinhar quando voltar.",
-  img: "/img/tagine.jpg",
+  img: "/img/couscous.jpg",
   imgCaption: "Cuscuz à mesa",
-  editorial: {
-    kicker: "Uma cozinha de encontros",
-    titulo: "Saberes compartilhados com o mundo.",
-    texto: "Tradições amazigh, árabe-andaluzas e judaicas participam da diversidade da cozinha marroquina. Cada região e cada família acrescenta seu modo de preparar e servir.",
-  },
-  receitas: [
-    { t: "Tajine de legumes e grão-de-bico", tempo: "50 min · 4 porções", d: "Cozimento suave, especiarias e legumes da estação.", img: "/img/tagine.jpg" },
-    { t: "Cuscuz integral com legumes", tempo: "40 min · 4 porções", d: "Uma versão prática para a mesa de casa.", img: "/img/couscous.jpg" },
-    { t: "Harira vegetariana", tempo: "70 min · 4 porções", d: "Lentilha, grão-de-bico e tomate em uma sopa perfumada.", img: "/img/pastilla.jpg" },
-  ],
 };
+
+export const saboresEditorial = {
+  kicker: "Uma cozinha de encontros",
+  titulo: "Saberes compartilhados com o mundo.",
+  texto:
+    "Tradições amazigh, árabe-andaluzas e judaicas participam da diversidade da cozinha marroquina. Cada região e cada família acrescenta seu modo de preparar e servir.",
+};
+
+export const saboresHeranca = {
+  ano: "2020",
+  titulo: "Os saberes do cuscuz",
+  texto:
+    "Reconhecidos pela UNESCO em candidatura conjunta de Argélia, Mauritânia, Marrocos e Tunísia. O patrimônio reúne preparo, transmissão de conhecimentos e partilha da refeição.",
+};
+
+export const saboresBalanceado = {
+  kicker: "Sabor e equilíbrio",
+  titulo: "O cuidado começa nos ingredientes.",
+  texto:
+    "Legumes, leguminosas e cereais integrais podem compor refeições variadas e nutritivas. O equilíbrio também depende das porções e das quantidades de sal, açúcar e gorduras usadas no preparo.",
+};
+
+export const receitas = [
+  {
+    id: "tagine",
+    img: "/img/tagine.jpg",
+    prato: "Tajine",
+    minutos: 50,
+    titulo: "Tajine de legumes e grão-de-bico",
+    intro: "Cozimento suave, especiarias e legumes da estação.",
+  },
+  {
+    id: "couscous",
+    img: "/img/couscous.jpg",
+    prato: "Cuscuz marroquino",
+    minutos: 40,
+    titulo: "Cuscuz integral com legumes",
+    intro: "Uma versão prática para a mesa de casa.",
+  },
+  {
+    id: "harira",
+    img: "/img/harira.jpg",
+    prato: "Harira",
+    minutos: 70,
+    titulo: "Harira vegetariana",
+    intro: "Lentilha, grão-de-bico e tomate em uma sopa perfumada.",
+  },
+];
 
 export const quotes = [
   { p: "A noite no deserto foi a experiência mais linda da minha vida. Tudo impecável, do traslado ao guia.", a: "Mariana & Felipe", s: "Lua de mel · Marrocos Essencial" },
