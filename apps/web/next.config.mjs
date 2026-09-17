@@ -21,7 +21,7 @@ const nextConfig = {
   // domínio e reescreve as rotas do site público para o outro deployment.
   async rewrites() {
     const SITE_ORIGIN = process.env.PUBLIC_SITE_DEPLOYMENT_URL ?? "https://partiu-marrocos-site.vercel.app";
-    return [
+    const marketingRewrites = [
       { source: "/", destination: `${SITE_ORIGIN}/` },
       { source: "/mapa", destination: `${SITE_ORIGIN}/mapa.html` },
       { source: "/mapa.html", destination: `${SITE_ORIGIN}/mapa.html` },
@@ -30,6 +30,12 @@ const nextConfig = {
       { source: "/img/:path*", destination: `${SITE_ORIGIN}/img/:path*` },
       { source: "/cinema/:path*", destination: `${SITE_ORIGIN}/cinema/:path*` },
     ];
+    // Achado real: a forma "array simples" de rewrites só roda DEPOIS das
+    // rotas do próprio filesystem (pages/app router) — e este app já tem uma
+    // page em "/" (redireciona pro /dashboard), que sempre ganharia da
+    // reescrita. `beforeFiles` roda antes disso, então "/" some do próprio
+    // app e passa a pertencer de verdade ao site público.
+    return { beforeFiles: marketingRewrites };
   },
 };
 
