@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "dotenv -e ../../.env -- next dev",
-    "build": "dotenv -e ../../.env -- next build",
+    "build": "pnpm --filter @partiumarrocos/db run generate && dotenv -e ../../.env -- next build",
     "start": "dotenv -e ../../.env -- next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
