@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma, withTenant, configurarSecret, rotacionarSecret, obterSecret } from "@partiumarrocos/db";
+import { prisma, withTenant, configurarSecret, rotacionarSecret, submeterJob } from "@partiumarrocos/db";
 import { requireAuthContext } from "@/lib/session";
 import { requirePermission } from "@/lib/rbac";
-import { sendCloudText } from "@/lib/whatsapp/cloud-api";
+import "@/lib/jobs"; // registra translation.enviar_traduzido antes do submeterJob abaixo
 
 /**
  * Cadastro da conta WhatsApp Cloud API do tenant — "cada cliente terá a sua"
@@ -68,7 +68,18 @@ export async function salvarContaWhatsapp(formData: FormData): Promise<{ ok?: bo
   return { ok: true };
 }
 
-/** Envia uma resposta manual do operador numa conversa de WhatsApp. */
+/**
+ * Envia uma resposta manual do operador numa conversa (WhatsApp ou webchat).
+ *
+ * PM-TRANSLATE-01: não manda mais pelo WhatsApp de forma síncrona aqui —
+ * grava a Message com o texto ORIGINAL do atendente e enfileira
+ * `translation.enviar_traduzido` (mesmo motivo do T5 pra
+ * `whatsapp.enviar_mensagem`: uma falha transitória de rede não pode perder
+ * a resposta). Esse job traduz pro idioma do cliente e entrega na mesma
+ * modalidade que ele usou por último (texto ou áudio) — em WEBCHAT não há
+ * envio externo, o widget do site lê a tradução por polling na própria
+ * Message.
+ */
 export async function responderWhatsapp(conversationId: string, formData: FormData): Promise<{ ok?: boolean; error?: string }> {
   const ctx = await requireAuthContext();
   requirePermission(ctx, "atendimento.manage");
@@ -82,48 +93,38 @@ export async function responderWhatsapp(conversationId: string, formData: FormDa
       include: { contact: true, account: true },
     }),
   );
-  if (!conversation || conversation.channel !== "WHATSAPP" || !conversation.account) {
-    return { error: "Conversa inválida." };
+  if (!conversation) return { error: "Conversa inválida." };
+  if (conversation.channel === "WHATSAPP" && !conversation.account) {
+    return { error: "Esta conversa não tem uma conta WhatsApp associada — reconfigure em Canais." };
+  }
+  if (conversation.channel !== "WHATSAPP" && conversation.channel !== "WEBCHAT") {
+    return { error: "Canal de conversa não suportado ainda." };
   }
 
-  const accessToken = await obterSecret(prisma, {
-    tenantId: ctx.tenantId!,
-    secretRef: conversation.account.accessTokenSecretRef,
-    actorType: "HUMANO",
-    userId: ctx.user.id,
-  });
-  if (!accessToken) {
-    return { error: "Não foi possível carregar as credenciais desta conta WhatsApp — reconfigure o access token em Canais." };
-  }
-
-  let externalId: string | null = null;
-  try {
-    externalId = await sendCloudText(
-      conversation.account.phoneNumberId,
-      accessToken,
-      conversation.contact.whatsappId ?? conversation.contact.telefone ?? "",
-      texto,
-    );
-  } catch (e) {
-    console.error("[whatsapp responder] falha no envio:", e);
-    return { error: "Falha ao enviar pelo WhatsApp — verifique a janela de 24h ou as credenciais da conta." };
-  }
-
-  const resultado = await withTenant(prisma, ctx.tenantId!, async (tx) => {
-    await tx.message.create({
+  const messageId = await withTenant(prisma, ctx.tenantId!, async (tx) => {
+    const message = await tx.message.create({
       data: {
         tenantId: ctx.tenantId!,
         conversationId: conversation.id,
         direction: "SAIDA",
         senderType: "HUMANO",
         conteudo: texto,
-        externalId,
       },
     });
     await tx.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: new Date() } });
-    return { ok: true as const };
+    return message.id;
+  });
+
+  await submeterJob(prisma, {
+    tenantId: ctx.tenantId!,
+    type: "translation.enviar_traduzido",
+    payload: { messageId },
+    priority: 10,
+    source: "inbox-resposta-manual",
+    actorType: "HUMANO",
+    userId: ctx.user.id,
   });
 
   revalidatePath(`/inbox`);
-  return resultado;
+  return { ok: true };
 }

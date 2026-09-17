@@ -7,6 +7,8 @@ import "./definitions/whatsapp-enviar-mensagem";
 import "./definitions/lead-repescar";
 import "./definitions/travel-document-verificar";
 import "./definitions/geolocation-purgar-pings";
+import "./definitions/translation-processar-mensagem";
+import "./definitions/translation-enviar-traduzido";
 
 export { garantirPurgaDePingsAgendada } from "./definitions/geolocation-purgar-pings";
 
@@ -15,4 +17,6 @@ export const JOB_TYPES_REGISTRADOS = [
   "lead.repescar_elegibilidade",
   "travel_document.verificar_pendencias",
   "geolocation.purgar_pings_antigos",
+  "translation.processar_mensagem_entrada",
+  "translation.enviar_traduzido",
 ] as const;

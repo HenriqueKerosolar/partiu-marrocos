@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, obterSecret, submeterJob } from "@partiumarrocos/db";
 import { findWhatsappAccountByPhoneNumberId, findWhatsappAccountByVerifyToken } from "@partiumarrocos/db";
-import { assinaturaValida } from "@/lib/whatsapp/cloud-api";
+import { assinaturaValida, downloadCloudMedia } from "@/lib/whatsapp/cloud-api";
 import { ingestWhatsappMessage, updateWhatsappMessageStatus } from "@/lib/whatsapp/ingest";
 import { gerarRespostaYalla } from "@/lib/ai/yalla";
-import "@/lib/jobs"; // registra os job types (whatsapp.enviar_mensagem) antes do primeiro submeterJob
+import { subirMidia } from "@/lib/translation/storage";
+import "@/lib/jobs"; // registra os job types (whatsapp.enviar_mensagem, translation.*) antes do primeiro submeterJob
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,6 +94,15 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // PM-TRANSLATE-01: carregado uma vez por lote — só usado se alguma
+        // mensagem deste lote for áudio/imagem/documento (ver abaixo).
+        const accessTokenParaMidia = await obterSecret(prisma, {
+          tenantId: account.tenantId,
+          secretRef: account.accessTokenSecretRef,
+          actorType: "SISTEMA",
+          actorLabel: "whatsapp-webhook",
+        });
+
         // Status de entrega (delivered/read/failed)
         const statuses = value.statuses as Array<{ id: string; status: string }> | undefined;
         if (statuses?.length) {
@@ -115,13 +125,34 @@ export async function POST(req: NextRequest) {
           if (!from) continue;
 
           let texto = "";
+          let mediaUrl: string | null = null;
+          let mediaType: string | null = null;
           if (m.type === "text") texto = m.text?.body ?? "";
           else if (m.type === "button") texto = m.button?.text ?? "";
           else if (m.type === "interactive") texto = m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "";
-          else if (m.type === "image" || m.type === "video" || m.type === "document" || m.type === "audio") {
-            // Mídia: registra o tipo recebido; download/transcrição fica para a próxima fase
-            // (não faz parte do escopo mínimo desta integração).
+          else if (m.type === "audio" || m.type === "image" || m.type === "document") {
+            // PM-TRANSLATE-01: baixa e hospeda no Blob (a URL da Meta expira
+            // rápido) — áudio vai pro job de transcrição/tradução; imagem e
+            // documento ficam só como anexo visível no /inbox (sem OCR/
+            // tradução de conteúdo visual, fora de escopo). Vídeo continua
+            // como placeholder "[video]": anexar vídeo com legenda/dublagem
+            // traduzida é um projeto de processamento de vídeo à parte, não
+            // decidido ainda (ver plano) — não baixa nem tenta transcrever.
             texto = `[${m.type}]`;
+            const media = m.audio ?? m.image ?? m.document;
+            if (media?.id && accessTokenParaMidia) {
+              const baixado = await downloadCloudMedia(media.id, accessTokenParaMidia);
+              if (baixado) {
+                try {
+                  mediaUrl = await subirMidia(`whatsapp/${m.id}`, baixado.buffer, baixado.mimeType);
+                  mediaType = m.type;
+                } catch (e) {
+                  console.error("[whatsapp webhook] falha ao hospedar mídia recebida:", e);
+                }
+              }
+            }
+          } else if (m.type === "video") {
+            texto = "[video]"; // ver comentário acima — vídeo fica fora desta rodada
           } else {
             continue; // tipos não tratados (location, contacts, reaction, etc.)
           }
@@ -132,11 +163,33 @@ export async function POST(req: NextRequest) {
             contactName: nomeContato,
             texto,
             externalMessageId: m.id ?? null,
+            mediaUrl,
+            mediaType,
           });
 
           if (result.duplicate) {
             console.log("[whatsapp webhook] mensagem duplicada ignorada:", m.id);
             continue;
+          }
+
+          // PM-TRANSLATE-01: transcreve (se áudio) e traduz pro idioma do
+          // tenant, assíncrono — o job é silencioso se o tenant não tiver
+          // provedor de IA configurado (mesmo padrão fail-closed do Yalla).
+          if (result.messageId) {
+            try {
+              await submeterJob(prisma, {
+                tenantId: account.tenantId,
+                type: "translation.processar_mensagem_entrada",
+                payload: { messageId: result.messageId },
+                idempotencyKey: `translation-entrada-${m.id}`,
+                priority: 5,
+                source: "whatsapp-webhook",
+                actorType: "SISTEMA",
+                actorLabel: "whatsapp-webhook",
+              });
+            } catch (e) {
+              console.error("[whatsapp webhook] falha ao enfileirar tradução:", e);
+            }
           }
 
           // Resposta automática do Yalla — só se a conversa tem IA ligada

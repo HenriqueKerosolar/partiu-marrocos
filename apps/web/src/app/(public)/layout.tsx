@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./public-site.css";
+import { FloatingChat } from "./components/floating-chat";
+import { WhatsappButton } from "./components/whatsapp-button";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <style>{`body{background:#080e19}`}</style>
       {children}
+      <WhatsappButton />
+      <FloatingChat />
     </>
   );
 }
