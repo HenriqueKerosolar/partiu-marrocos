@@ -266,3 +266,10 @@
 .pm-public .p11-single .pm-field,.pm-public .p11-multi,.pm-public .p11-medications{min-width:0}
 @media(max-width:520px){.pm-public .p11-options>[data-p11-list]{grid-template-columns:1fr}.pm-public .p11-location{padding:12px}.pm-public .p11-option{min-height:40px}.pm-public .p11-picker summary{padding:12px}}
 
+
+/* Suplemento: o mockup usa <button> pra "Site público"/"Falar com a
+   equipe" no cabeçalho (roteamento JS interno da demo); aqui são <a>
+   de verdade (navegação real), então a regra ".pm-headnav button" do
+   arquivo-fonte não bate por seletor. Réplica exata das mesmas
+   propriedades (cor, tamanho, sem sublinhado), só trocando o seletor. */
+.pm-public .pm-headnav a.pm-headlink{color:var(--pm-blue);font-size:12px;text-decoration:none}

@@ -13,8 +13,8 @@ export function PublicNav() {
           </div>
         </div>
         <nav className="pm-headnav" aria-label="Site público">
-          <Link href="/">Site público</Link>
-          <Link href="#reservar">Falar com a equipe</Link>
+          <Link className="pm-headlink" href="/">Site público</Link>
+          <Link className="pm-headlink" href="#reservar">Falar com a equipe</Link>
         </nav>
         <select id="pm-language" className="pm-lang" aria-label="Idiomas" defaultValue="0">
           <option value="0">PT</option>
