@@ -1,5 +1,12 @@
+// PM-PRE-GOLIVE-MASTER-01 — achado real de deploy: sem `binaryTargets`
+// explícito, o Prisma Client só empacota o engine da plataforma onde
+// `prisma generate` rodou (aqui, Windows) — o runtime serverless da Vercel
+// (`rhel-openssl-3.0.x`) não tem engine disponível e falha com
+// PrismaClientInitializationError em toda query, mesmo com a conexão de
+// banco correta. "native" mantém o dev local funcionando.
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
