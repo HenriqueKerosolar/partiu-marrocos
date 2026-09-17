@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { HelpButton } from "@/components/help-button";
+import "../../(public)/mockup.css";
 
 export const dynamic = "force-dynamic";
 
@@ -40,43 +37,48 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Partiu Marrocos <HelpButton helpKey="auth.login" /></CardTitle>
-          <CardDescription>Entre com seu email e senha.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {erro && <p className="text-sm text-destructive">{erro}</p>}
-            <Button type="submit" disabled={carregando}>
-              {carregando ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="pm-public" style={{ minHeight: "100vh", display: "flex", alignItems: "center" }}>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500&family=Space+Mono&display=swap"
+        rel="stylesheet"
+      />
+      <section className="pm-panel pm-signin" style={{ width: "100%" }}>
+        <div className="pm-eyebrow" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          BEM-VINDO À PARTIU MARROCOS <HelpButton helpKey="auth.login" />
+        </div>
+        <h1>
+          Sua próxima história <em>começa aqui.</em>
+        </h1>
+        <p className="pm-small" style={{ marginBottom: 19 }}>Entre com seu email e senha.</p>
+        <form onSubmit={onSubmit}>
+          <label className="pm-field" htmlFor="email">
+            Email
+            <input
+              id="email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label className="pm-field" htmlFor="password">
+            Senha
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          {erro && <p className="pm-small" style={{ color: "var(--pm-orange)", marginBottom: 13 }}>{erro}</p>}
+          <button type="submit" className="pm-btn pm-primary" disabled={carregando} style={{ width: "100%" }}>
+            {carregando ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
