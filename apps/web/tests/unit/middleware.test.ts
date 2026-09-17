@@ -58,25 +58,19 @@ describe("middleware — rotas públicas (sem sessão)", () => {
   });
 
   /**
-   * Achado real ao ligar o Vercel Multi Zones: sem essas rotas na lista de
-   * públicas, um visitante anônimo em "/" (ou em qualquer asset do site
-   * público) era redirecionado pro /login por este middleware ANTES da
-   * reescrita do next.config.mjs ter qualquer chance de servir o site
-   * estático — a reescrita só roda depois do middleware. Mascarado em todo
-   * teste manual anterior porque eu sempre testava logado.
+   * A home pública ("/") virou uma página de verdade do app (não mais
+   * redirect pro /dashboard) — um visitante anônimo precisa conseguir vê-la
+   * sem sessão.
    */
-  it("GET / (site público) passa sem sessão, para a reescrita do Multi Zones poder servi-lo", async () => {
+  it("GET / (home pública) passa sem sessão", async () => {
     const req = new NextRequest("http://localhost/", { method: "GET" });
     const res = await middleware(req);
     expect(res.status).not.toBe(307);
   });
 
-  it.each(["/mapa", "/css/cinema.css", "/js/data.js", "/img/logo.png", "/cinema/algo.jpg"])(
-    "GET %s (asset do site público) passa sem sessão",
-    async (pathname) => {
-      const req = new NextRequest(`http://localhost${pathname}`, { method: "GET" });
-      const res = await middleware(req);
-      expect(res.status).not.toBe(307);
-    },
-  );
+  it("GET /img/logo.png (foto do site público) passa sem sessão", async () => {
+    const req = new NextRequest("http://localhost/img/logo.png", { method: "GET" });
+    const res = await middleware(req);
+    expect(res.status).not.toBe(307);
+  });
 });

@@ -22,14 +22,11 @@ import { SESSION_COOKIE } from "./lib/session-constants";
 // mesmo modelo de "link de cartão de embarque" de uma companhia aérea.
 const PUBLIC_PATHS = ["/login", "/minha-viagem"];
 
-// Site público (site-original/partiumarrocos.com.br) via Vercel Multi Zones:
-// next.config.mjs reescreve essas rotas para o deployment estático separado,
-// mas essa reescrita só roda DEPOIS deste middleware — sem essa lista, um
-// visitante anônimo em "/" ou "/img/logo.png" era redirecionado pra /login
-// antes da reescrita ter qualquer chance de servir o site (achado real, só
-// apareceu testando sem cookie de sessão — ver nota do achado de
-// /api/health mais abaixo, mesmo padrão de mascaramento).
-const PUBLIC_SITE_PATH_PREFIXES = ["/mapa", "/css/", "/js/", "/img/", "/cinema/"];
+// Fotos do site público servidas como estático de public/img/*.jpg — o
+// matcher abaixo cobre qualquer request (não só páginas), então sem essa
+// exceção um visitante anônimo pedindo /img/logo.png seria redirecionado
+// pro /login em vez de receber a imagem.
+const PUBLIC_SITE_PATH_PREFIXES = ["/img/"];
 
 // Rotas verdadeiramente públicas por design (ex.: apps/web/src/app/api/
 // public/leads/route.ts — captura de lead do site público, sem sessão,
