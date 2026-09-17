@@ -1,92 +1,26 @@
 import type { Metadata } from "next";
 import { PublicNav } from "../components/public-nav";
+import { FoodScene } from "../components/food-scene";
+import { Contact } from "../components/contact";
 import { Footer } from "../components/footer";
-import { fontes, receitas, saboresBalanceado, saboresEditorial, saboresHeranca, saboresHero } from "@/lib/public-site-data";
-import { Sources } from "../components/sources";
+import { SiteHelp } from "../components/site-help";
 
 export const metadata: Metadata = { title: "Sabores do Marrocos · Partiu Marrocos" };
 
-// Réplica de p7food() em proposta/mockup-v11-source.html.
+// Réplica de sectionPage('food', data) em public-site.js: <h1> + food(true)
+// (sem o link "Explorar sabores e receitas", que levaria a esta própria
+// página) + cta() + footer().
 export default function SaboresDoMarrocosPage() {
   return (
     <>
-      <PublicNav />
-      <div className="p7-destination p7-public">
-        <section className="p7-hero p7-food-hero">
-          <div className="p7-hero-copy">
-            <div className="pm-eyebrow">{saboresHero.kicker}</div>
-            <h1>
-              {saboresHero.titulo}
-              <br />
-              <em>{saboresHero.tituloItalico}</em>
-            </h1>
-            <p>{saboresHero.subtitle}</p>
-          </div>
-          <figure>
-            <img src={saboresHero.img} alt="Mesa com cuscuz marroquino" />
-            <figcaption>{saboresHero.imgCaption}</figcaption>
-          </figure>
-        </section>
-
-        <section className="p7-food-story">
-          <div>
-            <div className="pm-eyebrow">{saboresEditorial.kicker.toUpperCase()}</div>
-            <h2>{saboresEditorial.titulo}</h2>
-            <p>{saboresEditorial.texto}</p>
-            <Sources items={saboresEditorial.fontes} />
-          </div>
-          <div className="p7-heritage-note">
-            <span className="p7-year">{saboresHeranca.ano}</span>
-            <h3>{saboresHeranca.titulo}</h3>
-            <p>{saboresHeranca.texto}</p>
-            <Sources items={saboresHeranca.fontes} />
-          </div>
-        </section>
-
-        <section className="p7-balanced">
-          <div className="pm-eyebrow">{saboresBalanceado.kicker.toUpperCase()}</div>
-          <h2>{saboresBalanceado.titulo}</h2>
-          <p>{saboresBalanceado.texto}</p>
-          <Sources items={saboresBalanceado.fontes} />
-        </section>
-
-        <div className="p7-section-title">
-          <h2>Para cozinhar em casa</h2>
-          <span className="pm-small">Três versões com base vegetal</span>
-        </div>
-        <div className="p7-recipes">
-          {receitas.map((r) => (
-            <article className="p7-recipe-card" key={r.id}>
-              <div className="p7-recipe-mark">
-                <span>{r.prato}</span>
-              </div>
-              <div>
-                <span className="pm-eyebrow">{r.minutos} MIN · 4 PORÇÕES</span>
-                <h3>{r.titulo}</h3>
-                <p>{r.intro}</p>
-                <a className="pm-btn pm-primary" href="/#reservar">Ver receita</a>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <details className="p7-meal-stories">
-          <summary>Curiosidades para levar à mesa</summary>
-          <h3>Harira e os encontros do Ramadã</h3>
-          <p>
-            A harira é uma sopa marroquina associada às refeições do Ramadã. Há muitas versões, com leguminosas,
-            tomate, massa e farinha.
-          </p>
-          <Sources items={[fontes.food]} />
-          <h3>Marrocos e a dieta mediterrânea</h3>
-          <p>
-            O Marrocos integra o reconhecimento cultural da dieta mediterrânea pela UNESCO. Esse patrimônio inclui
-            saberes, rituais, cultivo e o hábito de comer juntos.
-          </p>
-          <Sources items={[fontes.mediterranean]} />
-        </details>
+      <PublicNav active="food" />
+      <div className="public-editorial editorial-inner" data-public-landing>
+        <h1 className="editorial-page-title">Sabores do Marrocos</h1>
+        <FoodScene full />
+        <Contact />
+        <Footer />
+        <SiteHelp />
       </div>
-      <Footer />
     </>
   );
 }

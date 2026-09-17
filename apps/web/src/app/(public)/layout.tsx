@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./mockup.css";
+import "./public-site.css";
 
 export const dynamic = "force-dynamic";
 
@@ -8,22 +8,20 @@ export const metadata: Metadata = {
   description: "Roteiros pelo Marrocos com curadoria brasileira: deserto, cidades imperiais e a cidade azul, do jeito que fica na memória.",
 };
 
-// mockup.css é o CSS exato extraído de proposta/mockup-v11-source.html
-// (achado real: a versão anterior desta home foi feita "parecida", por
-// aproximação em Tailwind, e divergia do mockup em vários pontos — imagem
-// errada, seletor de idioma faltando, "Universo amazigh"/"Sabores do
-// Marrocos" viraram abas quando no mockup são páginas próprias. Pedido
-// explícito do usuário: clone, não aproximação. As classes pm-*/p7-* e as
-// fontes (Google Fonts direto, não next/font, pra bater com os nomes de
-// família literais usados no CSS) são as mesmas do arquivo-fonte.
+// public-site.css é o CSS real extraído de
+// partiumarrocos.com.br-php74-0.4.11/app/public-site.js — a fonte correta e
+// completa do site público (achado: a versão anterior usava um mockup
+// pequeno/incompleto, "proposta/preview-v11.html", como fonte; o pacote
+// PHP7.4 + Firebase enviado pelo usuário é que tem a home real, com todas as
+// seções — stats, roteiros com mapa, inspirações, experiências, amazigh,
+// sabores, galeria, curiosidades, depoimentos, equipe, FAQ). Sem Google
+// Fonts: o design usa só Georgia/serif (headings) e monospace (rótulos),
+// ambas fontes de sistema — não há @font-face nem link externo no original.
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500&family=Space+Mono&display=swap"
-        rel="stylesheet"
-      />
-      <div className="pm-public">{children}</div>
+      <style>{`body{background:#080e19}`}</style>
+      {children}
     </>
   );
 }

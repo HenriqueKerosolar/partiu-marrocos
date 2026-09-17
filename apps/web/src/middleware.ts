@@ -26,7 +26,7 @@ const PUBLIC_PATHS = ["/login", "/minha-viagem", "/universo-amazigh", "/sabores-
 // matcher abaixo cobre qualquer request (não só páginas), então sem essa
 // exceção um visitante anônimo pedindo /img/logo.png seria redirecionado
 // pro /login em vez de receber a imagem.
-const PUBLIC_SITE_PATH_PREFIXES = ["/img/"];
+const PUBLIC_SITE_PATH_PREFIXES = ["/img/", "/data/"];
 
 // Rotas verdadeiramente públicas por design (ex.: apps/web/src/app/api/
 // public/leads/route.ts — captura de lead do site público, sem sessão,

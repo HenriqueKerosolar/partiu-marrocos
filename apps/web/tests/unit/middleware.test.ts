@@ -82,4 +82,10 @@ describe("middleware — rotas públicas (sem sessão)", () => {
       expect(res.status).not.toBe(307);
     },
   );
+
+  it("GET /data/geo.json (dados do mapa de roteiro do site público) passa sem sessão", async () => {
+    const req = new NextRequest("http://localhost/data/geo.json", { method: "GET" });
+    const res = await middleware(req);
+    expect(res.status).not.toBe(307);
+  });
 });

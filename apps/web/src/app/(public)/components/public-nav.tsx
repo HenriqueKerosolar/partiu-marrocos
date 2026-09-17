@@ -1,33 +1,54 @@
 import Link from "next/link";
 
-export function PublicNav() {
+const NAV_LINKS: [string, string, string][] = [
+  ["/", "Descobrir", "home"],
+  ["/#site-inspirations", "Pacotes", "offers"],
+  ["/#site-destinations", "Destinos", "destinations"],
+  ["/#site-experiences", "Experiências", "experiences"],
+  ["/universo-amazigh", "Universo amazigh", "amazigh"],
+  ["/sabores-do-marrocos", "Sabores do Marrocos", "food"],
+  ["/#site-faq", "Na prática", "essentials"],
+];
+
+// Réplica literal de <header class="brand-header"> + nav(view) em
+// public-site.js — estrutura e valores conferidos ao vivo (getComputedStyle)
+// em 127.0.0.1:8080 (o pacote php74 0.4.11 rodando), não inventados.
+export function PublicNav({ active = "home" }: { active?: string }) {
   return (
     <>
-      <header className="pm-head">
-        <div className="pm-brand">
-          <img className="pm-logo" src="/img/logo.png" alt="Logo original Partiu Marrocos" />
-          <div className="pm-brandname">
+      <header className="brand-header">
+        <Link href="/" className="brand">
+          <img src="/img/logo.png" alt="Partiu Marrocos" />
+          <span>
             Sua viagem,
-            <br />
             <em>por inteiro.</em>
-          </div>
+          </span>
+        </Link>
+        <div className="header-links">
+          <Link href="/#site-inspirations">Pacotes</Link>
+          <Link href="/universo-amazigh">Universo amazigh</Link>
+          <a className="header-contact" href="/#site-contact">
+            Atendimento
+          </a>
         </div>
-        <nav className="pm-headnav" aria-label="Site público">
-          <Link className="pm-headlink" href="/">Site público</Link>
-          <Link className="pm-headlink" href="/#reservar">Falar com a equipe</Link>
-        </nav>
-        <select id="pm-language" className="pm-lang" aria-label="Idiomas" defaultValue="0">
-          <option value="0">PT</option>
-          <option value="1">EN</option>
-          <option value="2">ES</option>
-          <option value="3">FR</option>
-        </select>
+        <div className="account">
+          <select aria-label="Idioma" defaultValue="pt">
+            <option value="pt">PT</option>
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+          </select>
+          <a className="btn small" href="/login">
+            Entrar
+          </a>
+        </div>
       </header>
-      <nav className="p7-site-nav" aria-label="Explorar o Marrocos">
-        <Link className="pm-btn" href="/#roteiros">Roteiros</Link>
-        <Link className="pm-btn" href="/universo-amazigh">Universo amazigh</Link>
-        <Link className="pm-btn" href="/sabores-do-marrocos">Sabores do Marrocos</Link>
-        <Link className="pm-btn pm-primary" href="/#reservar">Comprar pacote</Link>
+      <nav className="public-nav" aria-label="Navegação do site">
+        {NAV_LINKS.map(([href, label, id]) => (
+          <Link key={href} href={href} aria-current={id === active ? "page" : undefined}>
+            {label}
+          </Link>
+        ))}
       </nav>
     </>
   );
