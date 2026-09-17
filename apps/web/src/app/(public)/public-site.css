@@ -1,4 +1,24 @@
 /* Public editorial experience. Operational dashboards retain their own layout. */
+/* Base global de .btn e o <dialog> nativo (showModal/close) — extraídos ao
+   vivo (getComputedStyle) de 127.0.0.1:8080, mesma técnica do brand-header.
+   Vivem fora de .public-editorial porque o <dialog> real do app é um
+   elemento de nível de página (id="dialog" em index.html), não um filho da
+   árvore editorial — por isso as regras abaixo não são prefixadas. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:.8px solid #efb947;border-radius:7px;padding:11px 17px;background:#f3b743;color:#10213a;font-weight:600;font-size:.86rem;text-decoration:none;cursor:pointer}
+.btn.secondary{background:transparent;border-color:#354153;color:#eddfc8}
+.btn.small{padding:9px 13px;font-size:.8rem}
+.eyebrow{font-size:.73rem;text-transform:uppercase;letter-spacing:2px;color:#a76b24;font-weight:700}
+.eyebrow{color:#efc97f;font-size:.68rem;letter-spacing:2.2px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:.88rem;min-width:0}
+.field.full{grid-column:1/-1}
+.field textarea{min-height:110px;resize:vertical;background:#162333;border-color:#3b495d;color:#f0e4d0}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+@media(max-width:760px){.field.full{grid-column:auto}}
+dialog{border:0;border-radius:18px;box-shadow:0 25px 100px #00000055;max-width:940px;width:calc(100% - 28px);max-height:90vh;padding:27px;color:#eddfc8;background:#111c2c;border:1px solid #40516b;overflow-y:auto}
+dialog::backdrop{background:#030b16d1;backdrop-filter:blur(5px)}
+.dialog-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}
+.dialog-head h2{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:inherit}
 /* .brand-header — extraído ao vivo (getComputedStyle) do pacote php74 0.4.11
    rodando em 127.0.0.1:8080, já que essas regras vivem em app.css (CSS do
    app logado como um todo), não em public-site.css. */

@@ -75,67 +75,69 @@ export function Contact() {
         {status === "ok" ? (
           <p style={{ color: "#edca8b" }}>Pedido recebido! Nossa equipe entra em contato em breve.</p>
         ) : (
-          <form onSubmit={onSubmit} className="formgrid" style={{ display: "grid", gap: 16 }}>
-            <label className="field">
-              Nome completo
-              <input name="name" type="text" required />
-            </label>
-            <label className="field">
-              E-mail
-              <input name="email" type="email" required />
-            </label>
-            <label className="field">
-              Telefone
-              <input name="phone" type="tel" required />
-            </label>
-            <label className="field">
-              Nº de pessoas
-              <select name="people" defaultValue="">
-                <option value="" disabled></option>
-                {PEOPLE.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Quando pretende ir?
-              <input name="month" type="month" />
-            </label>
-            <label className="field">
-              Pacote de interesse
-              <select name="interest" defaultValue="">
-                <option value="" disabled></option>
-                {INTERESSE.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Tipo de viagem
-              <select name="travelStyle" defaultValue="">
-                <option value="" disabled></option>
-                {ESTILO.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Orçamento por pessoa
-              <select name="budget" defaultValue="">
-                <option value="" disabled></option>
-                {ORCAMENTO.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Código do parceiro
-              <input name="partnerCode" type="text" />
-            </label>
-            <label className="field">
-              Mensagem
-              <textarea name="note" />
-            </label>
+          <form onSubmit={onSubmit}>
+            <div className="formgrid">
+              <label className="field">
+                <span>Nome completo *</span>
+                <input name="name" type="text" required />
+              </label>
+              <label className="field">
+                <span>E-mail *</span>
+                <input name="email" type="email" required />
+              </label>
+              <label className="field">
+                <span>Telefone *</span>
+                <input name="phone" type="tel" required />
+              </label>
+              <label className="field">
+                <span>Nº de pessoas</span>
+                <select name="people" defaultValue="">
+                  <option value="" disabled></option>
+                  {PEOPLE.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Quando pretende ir?</span>
+                <input name="month" type="month" />
+              </label>
+              <label className="field">
+                <span>Pacote de interesse</span>
+                <select name="interest" defaultValue="">
+                  <option value="" disabled></option>
+                  {INTERESSE.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Tipo de viagem</span>
+                <select name="travelStyle" defaultValue="">
+                  <option value="" disabled></option>
+                  {ESTILO.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Orçamento por pessoa</span>
+                <select name="budget" defaultValue="">
+                  <option value="" disabled></option>
+                  {ORCAMENTO.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Código do parceiro</span>
+                <input name="partnerCode" type="text" />
+              </label>
+              <label className="field full">
+                <span>Mensagem</span>
+                <textarea name="note" />
+              </label>
+            </div>
             {status === "error" ? <p style={{ color: "#D24E1C" }}>Não conseguimos enviar agora — tente novamente em instantes.</p> : null}
             <div className="actions">
               <button type="submit" className="btn" disabled={status === "loading"}>
