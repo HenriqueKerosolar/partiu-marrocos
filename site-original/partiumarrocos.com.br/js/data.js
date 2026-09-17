@@ -13,7 +13,7 @@ window.PM_DEFAULTS = {
        WhatsApp (ver POST em js/cinema.js e apps/web/src/app/api/public/
        leads/route.ts). Vazio = formulário funciona normalmente, só não
        grava lead nenhum (nunca trava a experiência do visitante). */
-    apiBase:"http://localhost:3000", tenantSlug:"partiu-marrocos",
+    apiBase:"https://partiu-marrocos.vercel.app", tenantSlug:"partiu-marrocos",
     instagram:"#", facebook:"#",
     youtube:"",                     /* ID ou URL do teaser do YouTube */
     videoNote:"🎥 Em breve, novos episódios da série \"Partiu Marrocos\".",

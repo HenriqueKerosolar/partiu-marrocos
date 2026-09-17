@@ -28,10 +28,19 @@ export async function withTenant<T>(
     throw new Error("withTenant: tenantId vazio — recusando executar sem contexto de tenant.");
   }
 
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
-    return fn(tx);
-  });
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+      return fn(tx);
+    },
+    // Achado real ao testar contra um banco remoto de verdade (Supabase) pela
+    // primeira vez nesta rodada: o padrão do Prisma (5s) sempre foi suficiente
+    // contra o Postgres local (latência ~0), mas nunca foi testado contra uma
+    // conexão remota real — uma transação com várias queries sequenciais
+    // (ex.: o seed, que faz upsert de cada permissão de cada papel em loop)
+    // estoura os 5s só de latência de rede, mesmo sem nenhuma query lenta.
+    { timeout: 15000 },
+  );
 }
 
 /**
@@ -48,8 +57,11 @@ export async function withSystem<T>(
   prisma: PrismaClient,
   fn: (tx: TenantTx) => Promise<T>,
 ): Promise<T> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.bypass_rls', 'on', true)`;
-    return fn(tx);
-  });
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.bypass_rls', 'on', true)`;
+      return fn(tx);
+    },
+    { timeout: 15000 },
+  );
 }

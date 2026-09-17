@@ -50,6 +50,14 @@ async function seedDemoTenant() {
     const permissions = await tx.permission.findMany();
     const permissionByKey = new Map(permissions.map((p) => [p.chave, p]));
 
+    // Achado real ao rodar pela primeira vez contra um banco remoto (Supabase):
+    // upsert por linha, um por um, dentro do loop (~100+ combinações de
+    // papel×permissão), soma só de latência de rede o suficiente pra estourar
+    // até um timeout de transação generoso — nunca apareceu contra o Postgres
+    // local (latência ~0). `createMany` com `skipDuplicates` faz a mesma coisa
+    // (idempotente, nunca duplica) num único round-trip por tipo de operação,
+    // em vez de um por combinação.
+    const rolePermissionPairs: { roleId: string; permissionId: string }[] = [];
     for (const roleDef of DEFAULT_ROLES) {
       const role = await tx.role.upsert({
         where: { tenantId_nome: { tenantId: tenant.id, nome: roleDef.nome } },
@@ -65,12 +73,11 @@ async function seedDemoTenant() {
       for (const chave of roleDef.permissoes) {
         const permission = permissionByKey.get(chave);
         if (!permission) continue;
-        await tx.rolePermission.upsert({
-          where: { roleId_permissionId: { roleId: role.id, permissionId: permission.id } },
-          update: {},
-          create: { roleId: role.id, permissionId: permission.id },
-        });
+        rolePermissionPairs.push({ roleId: role.id, permissionId: permission.id });
       }
+    }
+    if (rolePermissionPairs.length > 0) {
+      await tx.rolePermission.createMany({ data: rolePermissionPairs, skipDuplicates: true });
     }
 
     const adminRole = await tx.role.findUniqueOrThrow({

@@ -1,0 +1,10 @@
+# O painel admin (admin.html + *.php) depende de PHP com escrita em disco —
+# a Vercel não roda PHP e o disco é efêmero. A funcionalidade de admin está
+# sendo reconstruída dentro do CRM (apps/web), reaproveitando a mesma sessão/
+# autenticação já existente, em vez de reimplementar um gate de senha à parte
+# aqui. Até lá, nada relacionado ao admin fica publicamente acessível nesta
+# implantação.
+admin.html
+*.php
+.htaccess
+README.md
