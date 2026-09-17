@@ -2,11 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpButton } from "@/components/help-button";
-import "../../(public)/mockup.css";
+import { PublicNav } from "../../(public)/components/public-nav";
+import "../../(public)/public-site.css";
 
 export const dynamic = "force-dynamic";
 
+const BENEFICIOS = [
+  { t: "Cliente", d: "Viagens e reservas" },
+  { t: "Parceiro", d: "Indicações e comissões" },
+  { t: "Guia", d: "Grupos e percursos" },
+  { t: "Administração", d: "Gestão da agência" },
+];
+
+// Réplica de <section class="access-layout"> em app.js, conferida ao vivo em
+// 127.0.0.1:8080/app/#login. O original usa só "Continuar com Google"
+// (data-action="google-login") — o CRM não tem OAuth implementado, então o
+// card mantém o formulário real de email/senha (/api/auth/login) em vez de
+// simular um botão que não funcionaria.
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -37,48 +49,62 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="pm-public" style={{ minHeight: "100vh", display: "flex", alignItems: "center" }}>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&family=Outfit:wght@400;500&family=Space+Mono&display=swap"
-        rel="stylesheet"
-      />
-      <section className="pm-panel pm-signin" style={{ width: "100%" }}>
-        <div className="pm-eyebrow" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          BEM-VINDO À PARTIU MARROCOS <HelpButton helpKey="auth.login" />
-        </div>
-        <h1>
-          Sua próxima história <em>começa aqui.</em>
-        </h1>
-        <p className="pm-small" style={{ marginBottom: 19 }}>Entre com seu email e senha.</p>
-        <form onSubmit={onSubmit}>
-          <label className="pm-field" htmlFor="email">
-            Email
-            <input
-              id="email"
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
-          <label className="pm-field" htmlFor="password">
-            Senha
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
-          {erro && <p className="pm-small" style={{ color: "var(--pm-orange)", marginBottom: 13 }}>{erro}</p>}
-          <button type="submit" className="pm-btn pm-primary" disabled={carregando} style={{ width: "100%" }}>
-            {carregando ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
-      </section>
-    </div>
+    <>
+      <style>{`body{background:#080e19}`}</style>
+      <PublicNav onHome={false} />
+      <div className="public-editorial" data-public-landing>
+        <section className="access-layout">
+          <div className="access-intro">
+            <p className="eyebrow">Partiu Marrocos</p>
+            <h1>Seu próximo destino começa aqui.</h1>
+            <div className="access-benefits">
+              {BENEFICIOS.map((b) => (
+                <div key={b.t}>
+                  <strong>{b.t}</strong>
+                  <span>{b.d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="access-card">
+            <img className="access-logo" src="/img/logo.png" alt="Partiu Marrocos" />
+            <h2>Bem-vindo à sua área</h2>
+            <p>Entre com seu email e senha para acessar suas viagens ou seu espaço de trabalho.</p>
+            <form onSubmit={onSubmit} style={{ marginTop: 18 }}>
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="field" style={{ marginTop: 16 }}>
+                <span>Senha</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </label>
+              {erro ? <p style={{ color: "#D24E1C", fontSize: 13, marginTop: 12 }}>{erro}</p> : null}
+              <button type="submit" className="btn" disabled={carregando} style={{ width: "100%", marginTop: 18, minHeight: 54, justifyContent: "center" }}>
+                {carregando ? "Entrando…" : "Entrar"}
+              </button>
+            </form>
+            <a className="access-help" href="mailto:info@partiumarrocos.com.br">
+              Precisa de ajuda para acessar?
+            </a>
+            <a className="btn secondary access-back" href="/">
+              ← Voltar ao site
+            </a>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }

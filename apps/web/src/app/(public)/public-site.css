@@ -11,10 +11,32 @@
 .eyebrow{color:#efc97f;font-size:.68rem;letter-spacing:2.2px}
 .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
 .field{display:flex;flex-direction:column;gap:6px;font-size:.88rem;min-width:0}
+.field input,.field select{border:1px solid #3b495d;border-radius:7px;background:#162333;color:#f0e4d0;padding:10px 12px;max-width:100%;width:100%}
 .field.full{grid-column:1/-1}
 .field textarea{min-height:110px;resize:vertical;background:#162333;border-color:#3b495d;color:#f0e4d0}
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
 @media(max-width:760px){.field.full{grid-column:auto}}
+
+/* Tela de login (/login) — réplica de <section class="access-layout"> em
+   app.js/app.css, conferida ao vivo em 127.0.0.1:8080/app/#login. O botão
+   "Continuar com Google" do original foi trocado pelo formulário real de
+   email/senha (não inventamos OAuth que não existe no CRM hoje) — o resto
+   da estrutura/CSS é o mesmo. */
+.access-layout{max-width:1180px;margin:36px auto 70px;display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(28px,6vw,90px);align-items:center;padding:30px 24px;color:#f3eae1}
+.access-intro h1{font-size:clamp(42px,5.5vw,76px);line-height:1.07;max-width:650px;color:#f1e7d1;margin:16px 0 0}
+.access-benefits{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
+.access-benefits div{border-top:1px solid #edc57f44;padding-top:16px}
+.access-benefits strong,.access-benefits span{display:block}
+.access-benefits strong{color:#edc57f;font-size:19px}
+.access-benefits span{color:#afb8c5;font-size:13px;margin-top:8px}
+.access-card{padding:clamp(24px,4vw,48px);border:1px solid #d8b87744;border-radius:28px;background:radial-gradient(at right top,#28415a77,transparent 70%),#101c2b;box-shadow:0 24px 65px #00000033}
+.access-logo{height:95px;width:auto;object-fit:contain;margin-bottom:20px}
+.access-card h2{font-size:32px;margin:0 0 16px;color:#f3eae1;font-family:Georgia,'Times New Roman',serif;font-weight:400}
+.access-card>p{color:#c1c9d3;font-size:15px}
+.access-note{font-size:13px;color:#c1c9d3}
+.access-help{display:block;color:#edc57f;margin:26px 0;text-underline-offset:5px}
+.access-back{display:inline-flex;text-decoration:none}
+@media(max-width:900px){.access-layout{grid-template-columns:1fr;gap:40px}}
 dialog{border:0;border-radius:18px;box-shadow:0 25px 100px #00000055;max-width:940px;width:calc(100% - 28px);max-height:90vh;padding:27px;color:#eddfc8;background:#111c2c;border:1px solid #40516b;overflow-y:auto}
 dialog::backdrop{background:#030b16d1;backdrop-filter:blur(5px)}
 .dialog-head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}
