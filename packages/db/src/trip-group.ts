@@ -305,6 +305,50 @@ export function derivarParadaAtualProxima<T extends AtividadeParaProgresso>(
   return { atual, proxima };
 }
 
+/**
+ * Combina a data de um dia do itinerário (`TripItineraryDay.data`) com um
+ * horário livre (`TripActivity.horaInicio`, ex. "09:00") no timezone IANA da
+ * Trip, devolvendo o instante real em UTC — ou `null` se `horaInicio` não
+ * estiver preenchido (não há como comparar contra "agora" sem hora).
+ *
+ * Fonte única para "próxima atividade por horário real" (diferente de
+ * `derivarParadaAtualProxima`, que é baseada em status marcado pelo guia, não
+ * em relógio) — usada por `viagem.proxima_atividade`. Sem dependência nova:
+ * `packages/db` não tinha date-fns-tz/luxon (conferido), então isto usa
+ * Intl.DateTimeFormat nativo para achar o offset do timezone na data em
+ * questão (correto mesmo em mudança de horário de verão).
+ */
+export function combinarDataHoraNoTimezone(data: Date, horaInicio: string | null, timezone: string): Date | null {
+  if (!horaInicio) return null;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(horaInicio.trim());
+  if (!match) return null;
+  const hora = Number(match[1]);
+  const minuto = Number(match[2]);
+
+  const ano = data.getUTCFullYear();
+  const mes = data.getUTCMonth();
+  const dia = data.getUTCDate();
+
+  // Palpite inicial em UTC, depois corrigido pelo offset real do timezone
+  // nesse dia específico (Intl já resolve DST corretamente).
+  const palpiteUtc = new Date(Date.UTC(ano, mes, dia, hora, minuto));
+  const partes = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(palpiteUtc);
+  const valor = (tipo: string) => Number(partes.find((p) => p.type === tipo)?.value ?? 0);
+  const comoUtcSeNoTimezone = Date.UTC(valor("year"), valor("month") - 1, valor("day"), valor("hour"), valor("minute"), valor("second"));
+  const offsetMs = comoUtcSeNoTimezone - palpiteUtc.getTime();
+
+  return new Date(palpiteUtc.getTime() - offsetMs);
+}
+
 // ---------------------------------------------------------------------------
 // Consultas
 // ---------------------------------------------------------------------------

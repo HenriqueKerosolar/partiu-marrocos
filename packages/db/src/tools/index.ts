@@ -12,7 +12,8 @@ import { notaRegistrarTool } from "./definitions/notas";
 import { tarefaCriarTool } from "./definitions/tarefas";
 import { atendimentoEncaminharHumanoTool } from "./definitions/atendimento";
 import { leadAgendarRepescagemTool } from "./definitions/repescagem";
-import { viagemConsultarContextoTool } from "./definitions/viagem";
+import { viagemConsultarContextoTool, viagemProximaAtividadeTool, viagemLocalizacaoVeiculoTool } from "./definitions/viagem";
+import { conhecimentoConsultarTool } from "./definitions/conhecimento";
 
 export {
   leadConsultarTool,
@@ -27,6 +28,9 @@ export {
   atendimentoEncaminharHumanoTool,
   leadAgendarRepescagemTool,
   viagemConsultarContextoTool,
+  viagemProximaAtividadeTool,
+  viagemLocalizacaoVeiculoTool,
+  conhecimentoConsultarTool,
 };
 
 /** Camada 1 (T3 §6) — consulta + escrita segura básica. */
@@ -39,6 +43,9 @@ export const CAMADA_1_TOOLS = [
   contatoAtualizarDadosTool,
   leadAtualizarPreferenciasTool,
   viagemConsultarContextoTool,
+  viagemProximaAtividadeTool,
+  viagemLocalizacaoVeiculoTool,
+  conhecimentoConsultarTool,
 ];
 
 /**

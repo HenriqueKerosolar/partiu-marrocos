@@ -312,6 +312,7 @@ model Tenant {
   tripIncidents          TripIncident[]
   notifications          Notification[]
   tripReviews            TripReview[]
+  knowledgeEntries       KnowledgeEntry[]
 
   @@map("tenants")
 }
@@ -1943,6 +1944,79 @@ model TourVehicle {
   @@unique([tenantId, id])
   @@index([tenantId])
   @@map("tour_vehicles")
+}
+
+enum KnowledgeAnswerType {
+  STATIC_KNOWLEDGE
+  OFFICIAL_DYNAMIC
+  TRIP_DYNAMIC
+  REALTIME_CONTEXT
+}
+
+enum KnowledgeRiskLevel {
+  BAIXO
+  MEDIO
+  ALTO
+}
+
+// Base de conhecimento da Yalla — cada entrada é uma intenção que a Yalla
+// pode reconhecer via a tool `conhecimento.consultar` (packages/db/src/tools/
+// definitions/conhecimento.ts). STATIC_KNOWLEDGE/OFFICIAL_DYNAMIC carregam
+// `respostaBase` pronta; TRIP_DYNAMIC/REALTIME_CONTEXT nunca guardam resposta
+// fixa — só apontam (`toolId`) qual tool real a Yalla deve chamar pra pegar o
+// dado de verdade, nunca inventado. Conteúdo canônico só em pt-BR — a Yalla já
+// traduz nativamente na resposta (mesmo padrão usado hoje pra todo o resto dos
+// dados que ela manipula), sem camada de tradução separada aqui.
+model KnowledgeEntry {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+
+  categoria    String
+  subcategoria String?
+  intencao     String
+  answerType   KnowledgeAnswerType @map("answer_type")
+  riskLevel    KnowledgeRiskLevel  @default(BAIXO) @map("risk_level")
+
+  pergunta  String
+  variantes String[] @default([])
+  keywords  String[] @default([])
+  tags      String[] @default([])
+
+  respostaBase String? @map("resposta_base")
+
+  pais           String?
+  nacionalidade  String?
+
+  // Proveniência — obrigatória de fato pra OFFICIAL_DYNAMIC (disciplina no
+  // script de seed, não um CHECK constraint: não há UI de autoria ainda).
+  fonteTipo            String?   @map("fonte_tipo")
+  fonte                String?
+  ultimaVerificacao    DateTime? @map("ultima_verificacao")
+  intervaloRevisaoDias Int?      @map("intervalo_revisao_dias")
+
+  // Roteamento pra tool real (TRIP_DYNAMIC / REALTIME_CONTEXT).
+  requerTool           Boolean @default(false) @map("requer_tool")
+  toolId               String? @map("tool_id")
+  requerContextoViagem Boolean @default(false) @map("requer_contexto_viagem")
+  requerLocalizacao    Boolean @default(false) @map("requer_localizacao")
+  requerAuth           Boolean @default(false) @map("requer_auth")
+
+  politicaEscalonamento String? @map("politica_escalonamento")
+  fallback              String?
+  relacionados          String[] @default([])
+
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, categoria])
+  @@index([tenantId, answerType])
+  @@index([tenantId, ativo])
+  @@map("knowledge_entries")
 }
 
 // Grupo operacional — o que a 0.4.11 chamava de "group": um subconjunto de
