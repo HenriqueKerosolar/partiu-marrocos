@@ -46,3 +46,5 @@ coverage/
 # nome da pasta; nunca deveria entrar no histórico do repositório (nem no
 # site publicado, nem no controle de versão).
 site-original/_nao-publicar/
+
+.vercel
