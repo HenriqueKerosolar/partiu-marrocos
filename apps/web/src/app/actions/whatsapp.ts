@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma, withTenant, configurarSecret, rotacionarSecret, submeterJob } from "@partiumarrocos/db";
 import { requireAuthContext } from "@/lib/session";
 import { requirePermission } from "@/lib/rbac";
+import { drenarJobsPendentes } from "@/lib/jobs/drain";
 import "@/lib/jobs"; // registra translation.enviar_traduzido antes do submeterJob abaixo
 
 /**
@@ -124,6 +125,10 @@ export async function responderWhatsapp(conversationId: string, formData: FormDa
     actorType: "HUMANO",
     userId: ctx.user.id,
   });
+
+  // A Vercel (serverless) não roda o worker dedicado continuamente — drena
+  // na hora o job de tradução/entrega que acabou de ser enfileirado.
+  await drenarJobsPendentes().catch((e) => console.error("[responderWhatsapp] falha ao drenar jobs:", e));
 
   revalidatePath(`/inbox`);
   return { ok: true };

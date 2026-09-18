@@ -46,7 +46,10 @@ const PUBLIC_SITE_PATH_PREFIXES = ["/img/", "/data/"];
 // de sessão válido, então o middleware deixava passar por acidente) — só
 // apareceu numa chamada de verdade sem sessão (o cenário real de um
 // monitor externo ou da própria Meta).
-const PUBLIC_API_PATH_PREFIXES = ["/api/public/", "/api/health", "/api/webhooks/"];
+// `/api/cron/` (Vercel Cron, sem sessão por natureza) valida posse do
+// `CRON_SECRET` na própria rota — mesmo padrão de "pública aqui é só 'sem
+// cookie de sessão'" já usado pra webhooks/leads acima.
+const PUBLIC_API_PATH_PREFIXES = ["/api/public/", "/api/health", "/api/webhooks/", "/api/cron/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

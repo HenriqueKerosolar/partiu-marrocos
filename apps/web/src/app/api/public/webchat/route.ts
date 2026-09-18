@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, withTenant, submeterJob } from "@partiumarrocos/db";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { drenarJobsPendentes } from "@/lib/jobs/drain";
 import "@/lib/jobs"; // registra translation.processar_mensagem_entrada antes do submeterJob abaixo
 
 export const runtime = "nodejs";
@@ -112,6 +113,10 @@ export async function POST(req: Request) {
   } catch (e) {
     console.error("[webchat] falha ao enfileirar tradução:", e);
   }
+
+  // A Vercel (serverless) não roda o worker dedicado continuamente — drena
+  // na hora o job de tradução que acabou de ser enfileirado.
+  await drenarJobsPendentes().catch((e) => console.error("[webchat] falha ao drenar jobs:", e));
 
   return cors(NextResponse.json({ ok: true, conversationId, messageId }, { status: 201 }));
 }

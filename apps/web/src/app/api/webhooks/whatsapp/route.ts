@@ -5,6 +5,7 @@ import { assinaturaValida, downloadCloudMedia } from "@/lib/whatsapp/cloud-api";
 import { ingestWhatsappMessage, updateWhatsappMessageStatus } from "@/lib/whatsapp/ingest";
 import { gerarRespostaYalla } from "@/lib/ai/yalla";
 import { subirMidia } from "@/lib/translation/storage";
+import { drenarJobsPendentes } from "@/lib/jobs/drain";
 import "@/lib/jobs"; // registra os job types (whatsapp.enviar_mensagem, translation.*) antes do primeiro submeterJob
 
 export const runtime = "nodejs";
@@ -231,6 +232,11 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error("[whatsapp webhook] erro:", e);
   }
+
+  // A Vercel (serverless) não roda o worker dedicado continuamente — drena
+  // na hora os jobs que este request acabou de enfileirar (tradução, envio
+  // do Yalla). Ver lib/jobs/drain.ts.
+  await drenarJobsPendentes().catch((e) => console.error("[whatsapp webhook] falha ao drenar jobs:", e));
 
   return NextResponse.json({ ok: true });
 }
