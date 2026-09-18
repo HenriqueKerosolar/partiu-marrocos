@@ -51,8 +51,21 @@ registrarJobType({
   handler: async (prisma, ctx, payload) => {
     return withTenant(prisma, ctx.tenantId, async (tx) => {
       const conversation = await tx.conversation.findUnique({ where: { id: payload.conversationId }, include: { contact: true, account: true } });
-      if (!conversation || conversation.channel !== "WHATSAPP" || !conversation.account) {
-        throw new FalhaJob("conversa inválida ou sem conta WhatsApp associada", "PERMANENTE");
+      if (!conversation) throw new FalhaJob("conversa inválida", "PERMANENTE");
+
+      // WEBCHAT não tem API externa pra entregar — só grava a Message; o
+      // widget do site já lê a resposta por polling (mesmo caminho de
+      // translation-enviar-traduzido.ts para esse canal).
+      if (conversation.channel === "WEBCHAT") {
+        await tx.message.create({
+          data: { tenantId: ctx.tenantId, conversationId: conversation.id, direction: "SAIDA", senderType: payload.senderType, conteudo: payload.texto },
+        });
+        await tx.conversation.update({ where: { id: conversation.id }, data: { lastMessageAt: new Date() } });
+        return { enviado: true, canal: "WEBCHAT" as const };
+      }
+
+      if (conversation.channel !== "WHATSAPP" || !conversation.account) {
+        throw new FalhaJob("conversa sem canal de entrega suportado", "PERMANENTE");
       }
 
       const accessToken = await obterSecret(prisma, {

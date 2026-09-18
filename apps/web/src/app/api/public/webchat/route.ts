@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma, withTenant, submeterJob } from "@partiumarrocos/db";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { drenarJobsPendentes } from "@/lib/jobs/drain";
-import "@/lib/jobs"; // registra translation.processar_mensagem_entrada antes do submeterJob abaixo
+import { gerarRespostaYalla } from "@/lib/ai/yalla";
+import "@/lib/jobs"; // registra translation.processar_mensagem_entrada e whatsapp.enviar_mensagem antes do submeterJob abaixo
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,8 +115,32 @@ export async function POST(req: Request) {
     console.error("[webchat] falha ao enfileirar tradução:", e);
   }
 
+  // Resposta automática da Yalla — mesmo agente do WhatsApp (lib/ai/yalla.ts),
+  // só muda o canal de entrega. Silenciosa se o tenant não tem IA configurada
+  // ou a conversa tem `aiEnabled: false` (mesma regra do webhook do WhatsApp).
+  const conversation = await withTenant(prisma, tenantId, (tx) => tx.conversation.findUnique({ where: { id: conversationId } }));
+  if (conversation?.aiEnabled) {
+    try {
+      const resposta = await gerarRespostaYalla(tenantId, conversationId);
+      if (resposta) {
+        await submeterJob(prisma, {
+          tenantId,
+          type: "whatsapp.enviar_mensagem",
+          payload: { conversationId, texto: resposta, senderType: "IA" },
+          idempotencyKey: `yalla-reply-webchat-${messageId}`,
+          priority: 10,
+          source: "webchat-yalla",
+          actorType: "AGENTE",
+          actorLabel: "yalla",
+        });
+      }
+    } catch (e) {
+      console.error("[webchat] falha ao gerar resposta da Yalla:", e);
+    }
+  }
+
   // A Vercel (serverless) não roda o worker dedicado continuamente — drena
-  // na hora o job de tradução que acabou de ser enfileirado.
+  // na hora os jobs que este request acabou de enfileirar (tradução, Yalla).
   await drenarJobsPendentes().catch((e) => console.error("[webchat] falha ao drenar jobs:", e));
 
   return cors(NextResponse.json({ ok: true, conversationId, messageId }, { status: 201 }));

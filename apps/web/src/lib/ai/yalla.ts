@@ -55,8 +55,19 @@ Se não souber uma informação específica (preço exato, disponibilidade), dig
 
 Você tem ferramentas para consultar e atualizar o CRM (lead, contato, histórico, notas, tarefas, contexto de viagem/reserva). Use-as sempre que precisar de um dado real em vez de adivinhar — em especial viagem.consultar_contexto antes de responder qualquer pergunta sobre embarque, roteiro, datas ou status da viagem do cliente; nunca invente data de embarque ou item de roteiro. Antes de perguntar algo ao cliente, verifique com as ferramentas de consulta se essa informação já foi registrada — nunca peça de novo algo que já está no CRM ou que você já registrou como pendência nesta conversa. Toda inferência sua (classificação, interesse percebido) é uma opinião sua, não um fato — registre-a como inferência, nunca como dado declarado pelo cliente. Se identificar que a conversa precisa de um humano (pedido fora do que você pode resolver, reclamação, decisão que exige aprovação, ou o cliente pedir explicitamente para falar com uma pessoa), encaminhe para atendimento humano em vez de tentar resolver sozinho.`;
 
+// Os `id` das tools do Tool Broker usam "." como separador de namespace
+// (ex.: "lead.atualizar_preferencias") — a API de function-calling da
+// OpenAI rejeita isso (nome precisa bater com /^[a-zA-Z0-9_-]+$/, achado
+// real testando a Yalla no webchat: toda chamada com tools quebrava com
+// 400 antes de qualquer tool ser de fato chamada). Anthropic aceita ponto
+// no nome, mas sanitiza pros dois provedores por uniformidade — o mapa
+// reverso traduz de volta pro id real na hora de executar a tool.
 const TODAS_TOOLS = [...CAMADA_1_TOOLS, ...CAMADA_2_TOOLS];
-const TOOL_DECLARACOES: ToolDeclaracao[] = TODAS_TOOLS.map((t) => ({ name: t.id, description: t.descricao, inputSchema: zodParaJsonSchema(t.inputSchema) }));
+function sanitizarNomeTool(id: string): string {
+  return id.replace(/\./g, "_");
+}
+const TOOL_DECLARACOES: ToolDeclaracao[] = TODAS_TOOLS.map((t) => ({ name: sanitizarNomeTool(t.id), description: t.descricao, inputSchema: zodParaJsonSchema(t.inputSchema) }));
+const NOME_SANITIZADO_PARA_TOOL_ID = new Map(TODAS_TOOLS.map((t) => [sanitizarNomeTool(t.id), t.id]));
 
 // T3 §23 — "máximo 3-5 ciclos". Escolhido no meio da faixa: cada iteração é
 // uma chamada real de modelo (+ custo real, T2) dentro de uma resposta
@@ -165,7 +176,8 @@ export async function gerarRespostaYalla(tenantId: string, conversationId: strin
     messages.push({ role: "assistant", content: resposta.texto, toolCalls: resposta.toolCalls });
 
     for (const chamada of resposta.toolCalls) {
-      const resultado = await executarTool(prisma, ctx, { toolId: chamada.name, toolCallId: chamada.id, input: chamada.input });
+      const toolId = NOME_SANITIZADO_PARA_TOOL_ID.get(chamada.name) ?? chamada.name;
+      const resultado = await executarTool(prisma, ctx, { toolId, toolCallId: chamada.id, input: chamada.input });
       // Mesmo aviso que o Ai DEV Orquestrador usa nos resultados de tool
       // (pesquisa desta rodada) — mitigação de prompt-level, nunca uma
       // garantia por si só, mas a primeira linha de defesa real contra
