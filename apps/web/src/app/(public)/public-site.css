@@ -129,9 +129,11 @@ dialog::backdrop{background:#030b16d1;backdrop-filter:blur(5px)}
    Georgia nos rótulos de destaque). */
 .floating-chat-toggle{position:fixed;bottom:22px;left:22px;z-index:31;border:1px solid #d4aa655c;background:#e9d8b7;color:#13243b;border-radius:999px;padding:12px 21px;display:flex;align-items:center;gap:10px;box-shadow:0 9px 30px #0004;font-size:.9rem;cursor:pointer}
 .floating-chat-panel{position:fixed;bottom:22px;left:22px;z-index:32;width:min(360px,calc(100vw - 44px));height:min(520px,calc(100vh - 100px));display:flex;flex-direction:column;background:#111c2c;border:1px solid #40516b;border-radius:18px;box-shadow:0 25px 100px #00000055;overflow:hidden}
-.floating-chat-head{padding:16px 18px;border-bottom:1px solid #d4aa653d;background:#0d1928}
+.floating-chat-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #d4aa653d;background:#0d1928}
 .floating-chat-head strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#eddfc8}
 .floating-chat-head span{display:block;margin-top:4px;font-size:.72rem;color:#a6b0ba}
+.floating-chat-close{flex-shrink:0;border:0;background:transparent;color:#a6b0ba;font-size:16px;line-height:1;padding:4px;cursor:pointer;border-radius:6px;transition:background .2s,color .2s}
+.floating-chat-close:hover{background:#ffffff0f;color:#eddfc8}
 .floating-chat-list{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .floating-chat-empty{font-size:.8rem;color:#a6b0ba;text-align:center;margin-top:24px}
 .floating-chat-msg{max-width:82%;padding:9px 12px;border-radius:12px;font-size:.85rem;line-height:1.5}

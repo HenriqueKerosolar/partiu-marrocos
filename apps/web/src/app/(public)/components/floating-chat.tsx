@@ -132,8 +132,13 @@ export function FloatingChat() {
       {open ? (
         <div className="floating-chat-panel" role="dialog" aria-label="Chat com a equipe">
           <div className="floating-chat-head">
-            <strong>Fale com a gente</strong>
-            <span>Texto, foto ou documento — respondemos no seu idioma.</span>
+            <div>
+              <strong>Fale com a gente</strong>
+              <span>Texto, foto ou documento — respondemos no seu idioma.</span>
+            </div>
+            <button type="button" className="floating-chat-close" onClick={() => setOpen(false)} aria-label="Fechar chat">
+              ✕
+            </button>
           </div>
           <div className="floating-chat-list" ref={listRef} aria-live="polite">
             {mensagens.length === 0 ? <p className="floating-chat-empty">Manda um oi — alguém da equipe já te responde por aqui.</p> : null}
