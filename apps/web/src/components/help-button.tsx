@@ -15,7 +15,7 @@ import type { HelpContent } from "@partiumarrocos/db";
  * chama `buscarAjudaPublicaAction` em vez de `buscarAjudaAction`
  * (`requireAuthContext` redirecionaria pro /login e quebraria o botão ali).
  */
-export function HelpButton({ helpKey, publico = false }: { helpKey: string; publico?: boolean }) {
+export function HelpButton({ helpKey, publico = false, align = "left" }: { helpKey: string; publico?: boolean; align?: "left" | "right" }) {
   const [aberto, setAberto] = useState(false);
   const [conteudo, setConteudo] = useState<HelpContent | null>(null);
   const [pending, startTransition] = useTransition();
@@ -36,7 +36,7 @@ export function HelpButton({ helpKey, publico = false }: { helpKey: string; publ
         ?
       </button>
       {aberto && (
-        <div className="absolute left-0 top-6 z-50 w-80 rounded-md border border-border bg-background p-3 text-xs shadow-lg">
+        <div className={`absolute ${align === "right" ? "right-0" : "left-0"} top-6 z-50 w-80 rounded-md border border-border bg-background p-3 text-xs shadow-lg`}>
           <div className="mb-1 flex items-start justify-between gap-2">
             <p className="font-medium">{conteudo?.titulo ?? (pending ? "Carregando..." : "Ajuda")}</p>
             <button type="button" onClick={() => setAberto(false)} className="text-muted-foreground hover:text-foreground" aria-label="Fechar ajuda">

@@ -32,16 +32,13 @@ export function PublicNav({
   return (
     <>
       <header className="brand-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Link href="/" className="brand">
-            <img src="/img/logo.png" alt="Partiu Marrocos" />
-            <span>
-              Sua viagem,
-              <em>por inteiro.</em>
-            </span>
-          </Link>
-          <HelpButton helpKey={helpKey} publico />
-        </div>
+        <Link href="/" className="brand">
+          <img src="/img/logo.png" alt="Partiu Marrocos" />
+          <span>
+            Sua viagem,
+            <em>por inteiro.</em>
+          </span>
+        </Link>
         <div className="header-links">
           <a href={onHome ? "#site-inspirations" : "/#site-inspirations"}>Pacotes</a>
           <Link href="/universo-amazigh">Universo amazigh</Link>
@@ -56,9 +53,12 @@ export function PublicNav({
             <option value="es">ES</option>
             <option value="fr">FR</option>
           </select>
-          <a className="btn small" href="/login">
-            Entrar
-          </a>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <a className="btn small" href="/login">
+              Entrar
+            </a>
+            <HelpButton helpKey={helpKey} publico align="right" />
+          </div>
         </div>
       </header>
       <nav className="public-nav" aria-label="Navegação do site">
