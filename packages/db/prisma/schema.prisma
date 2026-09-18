@@ -9,10 +9,16 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
+// Sem `directUrl`: a DATABASE_URL do projeto já aponta pro Session Pooler do
+// Supabase (porta 5432, IPv4) — ele suporta prepared statements/advisory
+// locks, então serve tanto pra query normal quanto pra migration. `directUrl`
+// só é necessário quando a DATABASE_URL usa o Transaction Pooler (porta
+// 6543, que não suporta migration) ou o host direto (que é IPv6-only e
+// inacessível a partir do build da Vercel — foi exatamente isso que quebrou
+// o deploy: DIRECT_URL apontava pro host direto `db.<ref>.supabase.co`).
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
